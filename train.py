@@ -27,10 +27,6 @@ from data import *
 from args import Args
 import create_graphs
 
-# set up to work with or without cuda
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
-
 def train_vae_epoch(epoch, args, rnn, output, data_loader,
                     optimizer_rnn, optimizer_output,
                     scheduler_rnn, scheduler_output):
@@ -436,6 +432,9 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
                     optimizer_rnn, optimizer_output,
                     scheduler_rnn, scheduler_output):
     args = Args()
+    # set up to work with or without cuda
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    print("train_rnn_epoch is using device " + ('cuda:0' if torch.cuda.is_available() else 'cpu'))
     rnn.train()
     output.train()
     loss_sum = 0

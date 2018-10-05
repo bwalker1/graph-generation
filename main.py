@@ -5,10 +5,12 @@ warnings.warn = warn
 
 from train import *
 
-# set up to work with or without cuda
-device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
 
 if __name__ == '__main__':
+    # set up to work with or without cuda
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    print("Main is using "+('cuda:0' if torch.cuda.is_available() else 'cpu'))
     # All necessary arguments are defined in args.py
     args = Args()
     os.environ['CUDA_VISIBLE_DEVICES'] = str(args.cuda)
