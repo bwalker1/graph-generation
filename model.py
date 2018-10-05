@@ -18,7 +18,6 @@ import math
 import numpy as np
 import time
 
-
 # set up to work with or without cuda
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -216,6 +215,7 @@ def sample_sigmoid_supervised_simple(y_pred, y, current, y_len, sample_time=2):
 # n: noise for generator
 # l: whether an output is real or not, binary
 
+
 # plain LSTM model
 class LSTM_plain(nn.Module):
     def __init__(self, input_size, embedding_size, hidden_size, num_layers, has_input=True, has_output=False, output_size=None):
@@ -269,6 +269,7 @@ class LSTM_plain(nn.Module):
             output_raw = self.output(output_raw)
         # return hidden state at each time step
         return output_raw
+
 
 # plain GRU model
 class GRU_plain(nn.Module):

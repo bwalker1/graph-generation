@@ -1,3 +1,8 @@
+def warn(*args, **kwargs):
+    pass
+import warnings
+warnings.warn = warn
+
 from train import *
 
 # set up to work with or without cuda
@@ -25,10 +30,11 @@ if __name__ == '__main__':
 
     time = strftime("%Y-%m-%d %H:%M:%S", gmtime())
     # logging.basicConfig(filename='logs/train' + time + '.log', level=logging.DEBUG)
-    if args.clean_tensorboard:
-        if os.path.isdir("tensorboard"):
-            shutil.rmtree("tensorboard")
-    configure("tensorboard/run"+time, flush_secs=5)
+    if args.use_tensorboard:
+        if args.clean_tensorboard:
+            if os.path.isdir("tensorboard"):
+                shutil.rmtree("tensorboard")
+        configure("tensorboard/run"+time, flush_secs=5)
 
     graphs = create_graphs.create(args)
     
