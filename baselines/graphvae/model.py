@@ -29,7 +29,7 @@ class GraphVAE(nn.Module):
 
         output_dim = max_num_nodes * (max_num_nodes + 1) // 2
         #self.vae = model.MLP_VAE_plain(hidden_dim, latent_dim, output_dim)
-        self.vae = model.MLP_VAE_plain(input_dim * input_dim, latent_dim, output_dim)
+        self.vae = model.MLPVAEPlain(input_dim * input_dim, latent_dim, output_dim)
         #self.feature_mlp = model.MLP_plain(latent_dim, latent_dim, output_dim)
 
         self.max_num_nodes = max_num_nodes

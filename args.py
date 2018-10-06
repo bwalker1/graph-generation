@@ -79,7 +79,6 @@ class Args():
         self.sample_time = 2 # sample time in each time step, when validating
 
         ### output config
-        # self.dir_input = "/dfs/scratch0/jiaxuany0/"
         self.dir_input = "./"
         self.model_save_path = self.dir_input+'model_save/' # only for nll evaluation
         self.graph_save_path = self.dir_input+'graphs/'
@@ -89,7 +88,7 @@ class Args():
         self.nll_save_path = self.dir_input+'nll/'
 
 
-        self.load = False # if load model, default lr is very low
+        self.load = False   # if load model, default lr is very low
         self.load_epoch = 3000
         self.save = True
 
