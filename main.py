@@ -148,5 +148,5 @@ if __name__ == '__main__':
     # train_graph_completion(args,dataset_loader,rnn,output)
 
     ### nll evaluation
-    # train_nll(args, dataset_loader, dataset_loader, rnn, output, max_iter = 200, graph_validate_len=graph_validate_len,graph_test_len=graph_test_len)
+    # train_nll(args, dataset_loader, dataset_loader, rnn, output, max_iter = 200,graph_validate_len=graph_validate_len,graph_test_len=graph_test_len)
 
