@@ -70,6 +70,8 @@ if __name__ == '__main__':
     graph_test_len /= len(graphs_test)
     print('graph_test_len', graph_test_len)
 
+
+
     args.max_num_node = max([graphs[i].number_of_nodes() for i in range(len(graphs))])
     max_num_edge = max([graphs[i].number_of_edges() for i in range(len(graphs))])
     min_num_edge = min([graphs[i].number_of_edges() for i in range(len(graphs))])
@@ -114,7 +116,7 @@ if __name__ == '__main__':
     sample_strategy = torch.utils.data.sampler.WeightedRandomSampler([1.0 / len(dataset) for i in range(len(dataset))],
                                                                      num_samples=args.batch_size*args.batch_ratio, replacement=True)
     dataset_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, num_workers=args.num_workers,
-                                                 sampler=sample_strategy)
+                                               sampler=sample_strategy)
 
     ### model initialization
     ## Graph RNN VAE model
@@ -125,7 +127,7 @@ if __name__ == '__main__':
         rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
                         hidden_size=args.hidden_size_rnn, num_layers=args.num_layers, has_input=True,
                         has_output=False).to(device)
-        output = MLPVAEConditionalPlain(h_size=args.hidden_size_rnn, embedding_size=args.embedding_size_output, y_size=args.max_prev_node).to(device)
+        output = MLP_VAE_conditional_plain(h_size=args.hidden_size_rnn, embedding_size=args.embedding_size_output, y_size=args.max_prev_node).to(device)
     elif 'GraphRNN_MLP' in args.note:
         rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
                         hidden_size=args.hidden_size_rnn, num_layers=args.num_layers, has_input=True,
@@ -138,8 +140,6 @@ if __name__ == '__main__':
         output = GRU_plain(input_size=1, embedding_size=args.embedding_size_rnn_output,
                            hidden_size=args.hidden_size_rnn_output, num_layers=args.num_layers, has_input=True,
                            has_output=True, output_size=1).to(device)
-    else:
-        raise ValueError
 
     ### start training
     train(args, dataset_loader, rnn, output)

@@ -103,14 +103,13 @@ def gumbel_sigmoid(logits, temperature):
 # print(x)
 # print(y)
 
-
 def sample_sigmoid(y, sample, thresh=0.5, sample_time=2):
     '''
         do sampling over unnormalized score
     :param y: input
     :param sample: Bool
     :param thresh: if not sample, the threshold
-    :param sample_time: how many times do we sample, if =1, do single sample
+    :param sampe_time: how many times do we sample, if =1, do single sample
     :return: sampled result
     '''
 
@@ -274,8 +273,7 @@ class LSTM_plain(nn.Module):
 
 # plain GRU model
 class GRU_plain(nn.Module):
-    def __init__(self, input_size, embedding_size, hidden_size, num_layers,
-                 has_input=True, has_output=False, output_size=None):
+    def __init__(self, input_size, embedding_size, hidden_size, num_layers, has_input=True, has_output=False, output_size=None):
         super(GRU_plain, self).__init__()
         self.num_layers = num_layers
         self.hidden_size = hidden_size
@@ -308,12 +306,8 @@ class GRU_plain(nn.Module):
             if isinstance(m, nn.Linear):
                 m.weight.data = init.xavier_uniform_(m.weight.data, gain=nn.init.calculate_gain('relu'))
 
-    def init_hidden(self, batch_size, init_values=None):
-        if init_values is None:
-            hidden_var = Variable(torch.zeros(self.num_layers, batch_size, self.hidden_size)).to(device)
-        else:
-            hidden_var = Variable(init_values).to(device)
-        return hidden_var
+    def init_hidden(self, batch_size):
+        return Variable(torch.zeros(self.num_layers, batch_size, self.hidden_size)).to(device)
 
     def forward(self, input_raw, pack=False, input_len=None):
         if self.has_input:
@@ -375,11 +369,10 @@ class MLP_token_plain(nn.Module):
         t = self.token_output(h)
         return y,t
 
-
 # a deterministic linear output (update: add noise)
-class MLPVAEPlain(nn.Module):
+class MLP_VAE_plain(nn.Module):
     def __init__(self, h_size, embedding_size, y_size):
-        super(MLPVAEPlain, self).__init__()
+        super(MLP_VAE_plain, self).__init__()
         self.encode_11 = nn.Linear(h_size, embedding_size) # mu
         self.encode_12 = nn.Linear(h_size, embedding_size) # lsgms
 
@@ -405,11 +398,10 @@ class MLPVAEPlain(nn.Module):
         y = self.decode_2(y)
         return y, z_mu, z_lsgms
 
-
 # a deterministic linear output (update: add noise)
-class MLPVAEConditionalPlain(nn.Module):
+class MLP_VAE_conditional_plain(nn.Module):
     def __init__(self, h_size, embedding_size, y_size):
-        super(MLPVAEConditionalPlain, self).__init__()
+        super(MLP_VAE_conditional_plain, self).__init__()
         self.encode_11 = nn.Linear(h_size, embedding_size)  # mu
         self.encode_12 = nn.Linear(h_size, embedding_size)  # lsgms
 
@@ -1265,11 +1257,12 @@ class CNN_decoder_attention(nn.Module):
                 m.bias.data.zero_()
 
     def forward(self, x):
-        """
+        '''
+
         :param
         x: batch * channel * length
         :return:
-        """
+        '''
         # hop1
         x = self.deconv(x)
         x = self.bn(x)
@@ -1338,9 +1331,18 @@ class CNN_decoder_attention(nn.Module):
         return x_hop1, x_hop2, x_hop3, x_hop1_attention, x_hop2_attention, x_hop3_attention
 
 
-class GraphsageEncoder(nn.Module):
+
+
+
+
+#### test code ####
+# x = Variable(torch.randn(1, 256, 1)).to(device)
+# decoder = CNN_decoder(256, 16).to(device)
+# y = decoder(x)
+
+class Graphsage_Encoder(nn.Module):
     def __init__(self, feature_size, input_size, layer_num):
-        super(GraphsageEncoder, self).__init__()
+        super(Graphsage_Encoder, self).__init__()
 
         self.linear_projection = nn.Linear(feature_size, input_size)
 
@@ -1359,6 +1361,7 @@ class GraphsageEncoder(nn.Module):
         self.linear_0_0 = nn.Linear(input_size * (2 ** 0), input_size * (2 ** 1))
 
         self.linear = nn.Linear(input_size*(2+2+4+8), input_size*(16))
+
 
         self.bn_3_0 = nn.BatchNorm1d(self.input_size * (2 ** 1))
         self.bn_3_1 = nn.BatchNorm1d(self.input_size * (2 ** 2))
@@ -1381,14 +1384,17 @@ class GraphsageEncoder(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
 
+
     def forward(self, nodes_list, nodes_count_list):
-        """
-        :param nodes_list: a list, each element n_i is a tensor for node's k-i hop neighbours
+        '''
+
+        :param nodes: a list, each element n_i is a tensor for node's k-i hop neighbours
                 (the first nodes_hop is the furthest neighbor)
                 where n_i = N * num_neighbours * features
-               nodes_count_list: a list, each element is a list that show how many neighbours belongs to the father node
+               nodes_count: a list, each element is a list that show how many neighbours belongs to the father node
         :return:
-        """
+        '''
+
 
         # 3-hop feature
         # nodes original features to representations
@@ -1462,6 +1468,7 @@ class GraphsageEncoder(nn.Module):
         nodes_features_hop_2 = torch.mean(nodes_features, 1, keepdim=True)
         # print(nodes_features_hop_2.size())
 
+
         # 1-hop feature
         # nodes original features to representations
         nodes_list[2] = Variable(nodes_list[2]).to(device)
@@ -1474,6 +1481,7 @@ class GraphsageEncoder(nn.Module):
         nodes_features_hop_1 = torch.mean(nodes_features, 1, keepdim=True)
         # print(nodes_features_hop_1.size())
 
+
         # own feature
         nodes_list[3] = Variable(nodes_list[3]).to(device)
         nodes_list[3] = self.linear_projection(nodes_list[3])
@@ -1481,6 +1489,8 @@ class GraphsageEncoder(nn.Module):
         nodes_features = self.bn_0_0(nodes_features.view(-1, nodes_features.size(2), nodes_features.size(1)))
         nodes_features_hop_0 = nodes_features.view(-1, nodes_features.size(2), nodes_features.size(1))
         # print(nodes_features_hop_0.size())
+
+
 
         # concatenate
         nodes_features = torch.cat((nodes_features_hop_0, nodes_features_hop_1, nodes_features_hop_2, nodes_features_hop_3),dim=2)
