@@ -273,6 +273,8 @@ class LSTM_plain(nn.Module):
 
 
 # plain GRU model
+# TODO: understand the has_input and has_output parameters
+# TODO: should store the seed Z value somewhere instead of just the init_hidden stuff.
 class GRU_plain(nn.Module):
     def __init__(self, input_size, embedding_size, hidden_size, num_layers,
                  has_input=True, has_output=False, output_size=None):
@@ -299,6 +301,8 @@ class GRU_plain(nn.Module):
         # initialize
         self.hidden = None  # need initialize before forward run
 
+        # TODO: if using initialization from hidden, set up a network here.
+
         for name, param in self.rnn.named_parameters():
             if 'bias' in name:
                 nn.init.constant_(param, 0.25)
@@ -308,15 +312,20 @@ class GRU_plain(nn.Module):
             if isinstance(m, nn.Linear):
                 m.weight.data = init.xavier_uniform_(m.weight.data, gain=nn.init.calculate_gain('relu'))
 
+    # TODO: in general, there should probably need to be a fully-connected network in between the input labels and h_0
     def init_hidden(self, batch_size, init_values=None):
         if init_values is None:
             hidden_var = Variable(torch.zeros(self.num_layers, batch_size, self.hidden_size)).to(device)
         else:
             # TODO: check this line, which repeats the initialization values across the multiple RNN layers
-            hidden_var = Variable(init_values.repeat(self.num_layers,1,1)).to(device)
+            hidden_var = Variable(init_values.repeat(self.num_layers, 1, 1)).to(device)
         return hidden_var
 
     def forward(self, input_raw, pack=False, input_len=None):
+        use_hidden_fcn = False
+        if use_hidden_fcn:
+            # TODO: apply the hidden network
+            pass
         if self.has_input:
             input = self.input(input_raw)
             input = self.relu(input)

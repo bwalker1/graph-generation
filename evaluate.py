@@ -24,9 +24,9 @@ class Args_evaluate():
         # self.dataset_name_all = ['barabasi_noise0','barabasi_noise2','barabasi_noise4','barabasi_noise6','barabasi_noise8','barabasi_noise10']
         # self.dataset_name_all = ['caveman_small', 'ladder_small', 'grid_small', 'ladder_small', 'enzymes_small', 'barabasi_small','citeseer_small']
 
-        self.epoch_start=100
-        self.epoch_end=3001
-        self.epoch_step=100
+        self.epoch_start = 100
+        self.epoch_end = 3001
+        self.epoch_step = 100
 
 def find_nearest_idx(array,value):
     idx = (np.abs(array-value)).argmin()
