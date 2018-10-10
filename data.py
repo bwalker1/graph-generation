@@ -393,16 +393,20 @@ def test_encode_decode_adj_full():
 
 
 ########## use pytorch dataloader
-# TODO: modify this class probably
-# question: should this take in a label list instead of a Z_list? probably, and the conversion would best happen here
 class Graph_sequence_sampler_pytorch(torch.utils.data.Dataset):
     # TODO: add Z_list argument to the constructor
-    def __init__(self, G_list, max_num_node=None, max_prev_node=None, iteration=20000):
+    def __init__(self, G_list, max_num_node=None, max_prev_node=None, iteration=20000, use_classes = False):
+        self.use_classes = use_classes
+        
         self.adj_all = []
         self.len_all = []
+        if self.use_classes:
+            self.Z_all = []
         for G in G_list:
             self.adj_all.append(np.asarray(nx.to_numpy_matrix(G)))
             self.len_all.append(G.number_of_nodes())
+            if self.use_classes:
+                self.Z_all.append(G.graph['Z'])
         if max_num_node is None:
             self.n = max(self.len_all)
         else:
@@ -413,8 +417,6 @@ class Graph_sequence_sampler_pytorch(torch.utils.data.Dataset):
             print('max previous node: {}'.format(self.max_prev_node))
         else:
             self.max_prev_node = max_prev_node
-
-        # TODO: save Z_list
 
     def __len__(self):
         return len(self.adj_all)
@@ -441,7 +443,12 @@ class Graph_sequence_sampler_pytorch(torch.utils.data.Dataset):
         x_batch[1:adj_encoded.shape[0] + 1, :] = adj_encoded
 
         # TODO: grab Z from the Z_list, and stick it in the return dict
-        return {'x': x_batch, 'y': y_batch, 'len': len_batch}
+        returndict = {'x': x_batch, 'y': y_batch, 'len': len_batch}
+        
+        if self.use_classes:
+            returndict['Z'] = self.Z_all[idx]
+            
+        return returndict
 
 
     def calc_max_prev_node(self, iter=20000,topk=10):
@@ -466,6 +473,7 @@ class Graph_sequence_sampler_pytorch(torch.utils.data.Dataset):
             max_prev_node.append(max_encoded_len)
         max_prev_node = sorted(max_prev_node)[-1*topk:]
         return max_prev_node
+        
 
 
 
