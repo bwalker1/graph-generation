@@ -277,7 +277,7 @@ class LSTM_plain(nn.Module):
 # TODO: should store the seed Z value somewhere instead of just the init_hidden stuff.
 class GRU_plain(nn.Module):
     def __init__(self, input_size, embedding_size, hidden_size, num_layers,
-                 has_input=True, has_output=False, has_hidden_init=False, num_classes=None, output_size=None):
+                 has_input=True, has_output=False, output_size=None):
         super(GRU_plain, self).__init__()
         self.num_layers = num_layers
         self.hidden_size = hidden_size
@@ -299,10 +299,9 @@ class GRU_plain(nn.Module):
 
         self.relu = nn.ReLU()
         # initialize
-        #self.hidden = None  # need initialize before forward run
+        self.hidden = None  # need initialize before forward run
 
         # TODO: if using initialization from hidden, set up a network here.
-        self.hidden_init = nn.Linear(graph_embedding_size,self.hidden_size)
 
         for name, param in self.rnn.named_parameters():
             if 'bias' in name:
@@ -313,11 +312,20 @@ class GRU_plain(nn.Module):
             if isinstance(m, nn.Linear):
                 m.weight.data = init.xavier_uniform_(m.weight.data, gain=nn.init.calculate_gain('relu'))
 
-    def forward(self, input_raw, Z, pack=False, input_len=None):
-        # transform the Z input into the initial hidden state
-        # TODO: set up default variable for Z as just zeroes?
-        
-        
+    # TODO: in general, there should probably need to be a fully-connected network in between the input labels and h_0
+    def init_hidden(self, batch_size, init_values=None):
+        if init_values is None:
+            hidden_var = Variable(torch.zeros(self.num_layers, batch_size, self.hidden_size)).to(device)
+        else:
+            # TODO: check this line, which repeats the initialization values across the multiple RNN layers
+            hidden_var = Variable(init_values.repeat(self.num_layers, 1, 1)).to(device)
+        return hidden_var
+
+    def forward(self, input_raw, pack=False, input_len=None):
+        use_hidden_fcn = False
+        if use_hidden_fcn:
+            # TODO: apply the hidden network
+            pass
         if self.has_input:
             input = self.input(input_raw)
             input = self.relu(input)
@@ -325,11 +333,7 @@ class GRU_plain(nn.Module):
             input = input_raw
         if pack:
             input = pack_padded_sequence(input, input_len, batch_first=True)
-            
-        self.hidden = self.hidden_init(Z)
-        
         output_raw, self.hidden = self.rnn(input, self.hidden)
-        
         if pack:
             output_raw = pad_packed_sequence(output_raw, batch_first=True)[0]
         if self.has_output:
