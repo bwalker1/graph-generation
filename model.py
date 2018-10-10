@@ -312,7 +312,8 @@ class GRU_plain(nn.Module):
         if init_values is None:
             hidden_var = Variable(torch.zeros(self.num_layers, batch_size, self.hidden_size)).to(device)
         else:
-            hidden_var = Variable(init_values).to(device)
+            # TODO: check this line, which repeats the initialization values across the multiple RNN layers
+            hidden_var = Variable(init_values.repeat(self.num_layers,1,1)).to(device)
         return hidden_var
 
     def forward(self, input_raw, pack=False, input_len=None):

@@ -46,11 +46,15 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
         output.zero_grad()
         x_unsorted = data['x'].float()
         y_unsorted = data['y'].float()
+
+        # TODO: need to get the Z label information from the data loader here
+
         y_len_unsorted = data['len']
         y_len_max = max(y_len_unsorted)
         x_unsorted = x_unsorted[:, 0:y_len_max, :]
         y_unsorted = y_unsorted[:, 0:y_len_max, :]
         # initialize lstm hidden state according to batch size
+        # TODO: need to modify the following line to input the Z variables
         rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
         # output.hidden = output.init_hidden(batch_size=x_unsorted.size(0)*x_unsorted.size(1))
 
@@ -62,14 +66,14 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
 
         # input, output for output rnn module
         # a smart use of pytorch builtin function: pack variable--b1_l1,b2_l1,...,b1_l2,b2_l2,...
-        y_reshape = pack_padded_sequence(y,y_len,batch_first=True).data
+        y_reshape = pack_padded_sequence(y, y_len, batch_first=True).data
         # reverse y_reshape, so that their lengths are sorted, add dimension
         idx = [i for i in range(y_reshape.size(0)-1, -1, -1)]
         idx = torch.LongTensor(idx)
         y_reshape = y_reshape.index_select(0, idx)
         y_reshape = y_reshape.view(y_reshape.size(0),y_reshape.size(1),1)
 
-        output_x = torch.cat((torch.ones(y_reshape.size(0),1,1),y_reshape[:,0:-1,0:1]),dim=1)
+        output_x = torch.cat((torch.ones(y_reshape.size(0), 1, 1), y_reshape[:, 0:-1, 0:1]), dim=1)
         output_y = y_reshape
         # batch size for output module: sum(y_len)
         output_y_len = []
@@ -112,7 +116,6 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
         scheduler_output.step()
         scheduler_rnn.step()
 
-
         if epoch % args.epochs_log==0 and batch_idx==0: # only output first batch's statistics
             print('Epoch: {}/{}, train loss: {:.6f}, graph type: {}, num_layer: {}, hidden: {}'.format(
                 epoch, args.epochs, loss.item(), args.graph_type, args.num_layers, args.hidden_size_rnn))
@@ -122,6 +125,8 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
             log_value('loss_'+args.fname, loss.item(), epoch*args.batch_ratio+batch_idx)
         feature_dim = y.size(1)*y.size(2)
         loss_sum += loss.item()*feature_dim
+
+    # TODO: check this line - is batch_idx actually defined here?
     return loss_sum/(batch_idx+1)
 
 
@@ -282,6 +287,7 @@ def train(args, dataset_train, rnn, output):
                             optimizer_rnn, optimizer_output,
                             scheduler_rnn, scheduler_output)
         elif 'GraphRNN_RNN' in args.note:
+            # NOTE: this is the one we're using here
             train_rnn_epoch(epoch, args, rnn, output, dataset_train,
                             optimizer_rnn, optimizer_output,
                             scheduler_rnn, scheduler_output)

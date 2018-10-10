@@ -381,9 +381,22 @@ def test_encode_decode_adj_full():
 
 
 
+## TODO: understand how the data loader setup works
+# Currently, dataloader has three variables: x, y, and len for each datapoint (graph) in the batch
+# x:
+# y:
+# len: the number of nodes in the graph
+#
+# We need to add a 4th - the labeling variable Z for the graph
+#
+# max_prev_node is the maximum number of previous nodes to consider (maximum frontier size M), I believe (confirm?)
+
 
 ########## use pytorch dataloader
+# TODO: modify this class probably
+# question: should this take in a label list instead of a Z_list? probably, and the conversion would best happen here
 class Graph_sequence_sampler_pytorch(torch.utils.data.Dataset):
+    # TODO: add Z_list argument to the constructor
     def __init__(self, G_list, max_num_node=None, max_prev_node=None, iteration=20000):
         self.adj_all = []
         self.len_all = []
@@ -401,35 +414,35 @@ class Graph_sequence_sampler_pytorch(torch.utils.data.Dataset):
         else:
             self.max_prev_node = max_prev_node
 
-        # self.max_prev_node = max_prev_node
+        # TODO: save Z_list
 
-        # # sort Graph in descending order
-        # len_batch_order = np.argsort(np.array(self.len_all))[::-1]
-        # self.len_all = [self.len_all[i] for i in len_batch_order]
-        # self.adj_all = [self.adj_all[i] for i in len_batch_order]
     def __len__(self):
         return len(self.adj_all)
     def __getitem__(self, idx):
+        # NOTE: despite the names x_batch, y_batch, this appears to only return a single sequence, not a batch
         adj_copy = self.adj_all[idx].copy()
         x_batch = np.zeros((self.n, self.max_prev_node))  # here zeros are padded for small graph
-        x_batch[0,:] = 1 # the first input token is all ones
+        x_batch[0, :] = 1  # the first input token is all ones
         y_batch = np.zeros((self.n, self.max_prev_node))  # here zeros are padded for small graph
         # generate input x, y pairs
         len_batch = adj_copy.shape[0]
-        x_idx = np.random.permutation(adj_copy.shape[0])
-        adj_copy = adj_copy[np.ix_(x_idx, x_idx)]
+        x_idx = np.random.permutation(adj_copy.shape[0])  # Randomly permute the order of the nodes of G, and adjust
+        adj_copy = adj_copy[np.ix_(x_idx, x_idx)]         # the adjacency matrix accordingly
         adj_copy_matrix = np.asmatrix(adj_copy)
-        G = nx.from_numpy_matrix(adj_copy_matrix)
+        G = nx.from_numpy_matrix(adj_copy_matrix)         # Create new permuted networkx graph
         # then do bfs in the permuted G
-        start_idx = np.random.randint(adj_copy.shape[0])
-        x_idx = np.array(bfs_seq(G, start_idx))
+        start_idx = np.random.randint(adj_copy.shape[0])  # pick random starting node
+        x_idx = np.array(bfs_seq(G, start_idx))           # Generate a bfs sequence
         adj_copy = adj_copy[np.ix_(x_idx, x_idx)]
         adj_encoded = encode_adj(adj_copy.copy(), max_prev_node=self.max_prev_node)
         # get x and y and adj
         # for small graph the rest are zero padded
         y_batch[0:adj_encoded.shape[0], :] = adj_encoded
         x_batch[1:adj_encoded.shape[0] + 1, :] = adj_encoded
-        return {'x':x_batch,'y':y_batch, 'len':len_batch}
+
+        # TODO: grab Z from the Z_list, and stick it in the return dict
+        return {'x': x_batch, 'y': y_batch, 'len': len_batch}
+
 
     def calc_max_prev_node(self, iter=20000,topk=10):
         max_prev_node = []
@@ -485,11 +498,6 @@ class Graph_sequence_sampler_pytorch_nobfs(torch.utils.data.Dataset):
         y_batch[0:adj_encoded.shape[0], :] = adj_encoded
         x_batch[1:adj_encoded.shape[0] + 1, :] = adj_encoded
         return {'x':x_batch,'y':y_batch, 'len':len_batch}
-
-# dataset = Graph_sequence_sampler_pytorch_nobfs(graphs)
-# print(dataset[1]['x'])
-# print(dataset[1]['y'])
-# print(dataset[1]['len'])
 
 
 
