@@ -276,13 +276,15 @@ class LSTM_plain(nn.Module):
 # TODO: understand the has_input and has_output parameters
 # TODO: should store the seed Z value somewhere instead of just the init_hidden stuff.
 class GRU_plain(nn.Module):
-    def __init__(self, input_size, embedding_size, hidden_size, num_layers,
+    def __init__(self, input_size, embedding_size,  hidden_size, num_layers, graph_embedding_size=None,
                  has_input=True, has_output=False, has_hidden_init=False, num_classes=None, output_size=None):
         super(GRU_plain, self).__init__()
         self.num_layers = num_layers
         self.hidden_size = hidden_size
+        self.graph_embedding_size = graph_embedding_size
         self.has_input = has_input
         self.has_output = has_output
+        self.has_hidden_init = has_hidden_init
 
         if has_input:
             self.input = nn.Linear(input_size, embedding_size)
@@ -299,10 +301,11 @@ class GRU_plain(nn.Module):
 
         self.relu = nn.ReLU()
         # initialize
-        #self.hidden = None  # need initialize before forward run
+        self.hidden = None  # need initialize before forward run
 
-        # TODO: if using initialization from hidden, set up a network here.
-        self.hidden_init = nn.Linear(graph_embedding_size,self.hidden_size)
+        # Set up the network that converts the input graph embedding into the initial hidden state
+        if self.has_hidden_init:
+            self.hidden_init = nn.Linear(self.graph_embedding_size,self.hidden_size)
 
         for name, param in self.rnn.named_parameters():
             if 'bias' in name:
@@ -313,10 +316,9 @@ class GRU_plain(nn.Module):
             if isinstance(m, nn.Linear):
                 m.weight.data = init.xavier_uniform_(m.weight.data, gain=nn.init.calculate_gain('relu'))
 
-    def forward(self, input_raw, Z, pack=False, input_len=None):
+    def forward(self, input_raw, Z=None, pack=False, input_len=None):
         # transform the Z input into the initial hidden state
         # TODO: set up default variable for Z as just zeroes?
-        
         
         if self.has_input:
             input = self.input(input_raw)
@@ -325,10 +327,16 @@ class GRU_plain(nn.Module):
             input = input_raw
         if pack:
             input = pack_padded_sequence(input, input_len, batch_first=True)
-            
-        self.hidden = self.hidden_init(Z)
-        
-        output_raw, self.hidden = self.rnn(input, self.hidden)
+
+        if self.has_hidden_init:
+            if Z is None:
+                raise ValueError
+            self.hidden = self.hidden_init(Z)
+
+        if self.hidden is not None:
+            output_raw, self.hidden = self.rnn(input, self.hidden)
+        else:
+            output_raw, self.hidden = self.rnn(input)
         
         if pack:
             output_raw = pad_packed_sequence(output_raw, batch_first=True)[0]
