@@ -10,7 +10,7 @@ import time
 
 import eval.mmd as mmd
 
-PRINT_TIME = False
+PRINT_TIME = True
 
 def degree_worker(G):
     return np.array(nx.degree_histogram(G))
@@ -224,10 +224,10 @@ def orbit_stats_all(graph_ref_list, graph_pred_list):
     mmd_dist = mmd.compute_mmd(total_counts_ref, total_counts_pred, kernel=mmd.gaussian,
             is_hist=False, sigma=30.0)
 
-    print('-------------------------')
-    print(np.sum(total_counts_ref, axis=0) / len(total_counts_ref))
-    print('...')
-    print(np.sum(total_counts_pred, axis=0) / len(total_counts_pred))
-    print('-------------------------')
+    # print('-------------------------')
+    # print(np.sum(total_counts_ref, axis=0) / len(total_counts_ref))
+    # print('...')
+    # print(np.sum(total_counts_pred, axis=0) / len(total_counts_pred))
+    # print('-------------------------')
     return mmd_dist
 

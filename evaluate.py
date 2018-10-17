@@ -141,6 +141,27 @@ def load_ground_truth(dir_input, dataset_name, model_name='GraphRNN_RNN'):
         return None
     return graph_test
 
+
+def eval_graph_lists(graph_test, graphs):
+    ''' Evaluate a list of graphs by comparing with graphs in directory dir_input.
+    Args:
+        graphs_test: list of graphs being tested
+        graphs: ground truth graphs against which MMD statistics for graph_test is compared
+    '''
+    # graph_test = load_ground_truth(dir_input, dataset_name)
+    # graph_test_len = len(graph_test)
+    # graph_test = graph_test[int(0.8 * graph_test_len):] # test on a hold out test set
+    mmd_degree = eval.stats.degree_stats(graph_test, graphs)
+    mmd_clustering = eval.stats.clustering_stats(graph_test, graphs)
+    try:
+        mmd_4orbits = eval.stats.orbit_stats_all(graph_test, graphs)
+    except:
+        mmd_4orbits = -1
+    # print('deg: ', mmd_degree)
+    # print('clustering: ', mmd_clustering)
+    # print('orbits: ', mmd_4orbits)
+    return mmd_degree,mmd_clustering,mmd_4orbits
+
 def eval_single_list(graphs, dir_input, dataset_name):
     ''' Evaluate a list of graphs by comparing with graphs in directory dir_input.
     Args:
@@ -195,7 +216,7 @@ def evaluation_epoch(dir_input, fname_output, model_name, dataset_name, args, is
         for graph in graph_test:
             graph_test_aver+=graph.number_of_nodes()
         graph_test_aver /= len(graph_test)
-        print('test average len',graph_test_aver)
+        #print('test average len',graph_test_aver)
 
 
         # get performance for proposed approaches
