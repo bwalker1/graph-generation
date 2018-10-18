@@ -56,7 +56,7 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
         # initialize lstm hidden state according to batch size
         # TODO: need to modify the following line to input the Z variables
         rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
-        # output.hidden = output.init_hidden(batch_size=x_unsorted.size(0)*x_unsorted.size(1))
+        output.hidden = output.init_hidden(batch_size=x_unsorted.size(0)*x_unsorted.size(1))
 
         # sort input
         y_len, sort_index = torch.sort(y_len_unsorted, 0, descending=True)

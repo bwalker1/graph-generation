@@ -300,8 +300,9 @@ class GRU_plain(nn.Module):
         self.relu = nn.ReLU()
         # initialize
         self.hidden = None  # need initialize before forward run
-
+        self.batch_size = None
         # TODO: if using initialization from hidden, set up a network here.
+        self.hidden_net = nn.Linear(2,self.hidden_size)
 
         for name, param in self.rnn.named_parameters():
             if 'bias' in name:
@@ -314,6 +315,7 @@ class GRU_plain(nn.Module):
 
     # TODO: in general, there should probably need to be a fully-connected network in between the input labels and h_0
     def init_hidden(self, batch_size, init_values=None):
+        self.batch_size = batch_size
         if init_values is None:
             hidden_var = Variable(torch.zeros(self.num_layers, batch_size, self.hidden_size)).to(device)
         else:
@@ -322,10 +324,8 @@ class GRU_plain(nn.Module):
         return hidden_var
 
     def forward(self, input_raw, pack=False, input_len=None):
-        use_hidden_fcn = False
-        if use_hidden_fcn:
-            # TODO: apply the hidden network
-            pass
+        Z = torch.zeros(self.num_layers,self.batch_size,2)
+        self.hidden = self.hidden_net(Z)
         if self.has_input:
             input = self.input(input_raw)
             input = self.relu(input)
