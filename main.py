@@ -10,6 +10,7 @@ from train import *
 if __name__ == '__main__':
     # set up to work with or without cuda
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    print("Main is using "+('cuda:0' if torch.cuda.is_available() else 'cpu'))
     # All necessary arguments are defined in args.py
     args = Args()
     os.environ['CUDA_VISIBLE_DEVICES'] = str(args.cuda)
@@ -131,7 +132,6 @@ if __name__ == '__main__':
                         has_output=False).to(device)
         output = MLP_plain(h_size=args.hidden_size_rnn, embedding_size=args.embedding_size_output, y_size=args.max_prev_node).to(device)
     elif 'GraphRNN_RNN' in args.note:
-        ## This is the one we actually use
         rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
                         hidden_size=args.hidden_size_rnn, num_layers=args.num_layers, has_input=True,
                         has_output=True, output_size=args.hidden_size_rnn_output).to(device)
