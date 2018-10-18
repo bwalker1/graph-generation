@@ -296,6 +296,9 @@ class GRU_plain(nn.Module):
         self.relu = nn.ReLU()
         # initialize
         self.hidden = None  # need initialize before forward run
+        
+        # TODO: get this shaped right
+        self.hidden_net = nn.Linear(2,self.num_layers,self.hidden_size)
 
         for name, param in self.rnn.named_parameters():
             if 'bias' in name:
@@ -309,7 +312,7 @@ class GRU_plain(nn.Module):
     def init_hidden(self, batch_size):
         return Variable(torch.zeros(self.num_layers, batch_size, self.hidden_size)).to(device)
 
-    def forward(self, input_raw, pack=False, input_len=None):
+    def forward(self, input_raw, Z=None, pack=False, input_len=None):
         if self.has_input:
             input = self.input(input_raw)
             input = self.relu(input)
@@ -317,6 +320,10 @@ class GRU_plain(nn.Module):
             input = input_raw
         if pack:
             input = pack_padded_sequence(input, input_len, batch_first=True)
+            
+        if Z is not None:
+            self.hidden = self.hidden_net(Z)
+        
         output_raw, self.hidden = self.rnn(input, self.hidden)
         if pack:
             output_raw = pad_packed_sequence(output_raw, batch_first=True)[0]
