@@ -438,17 +438,22 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
     rnn.train()
     output.train()
     loss_sum = 0
+    
+    use_Z = False
     for batch_idx, data in enumerate(data_loader):
         rnn.zero_grad()
         output.zero_grad()
         x_unsorted = data['x'].float()
         y_unsorted = data['y'].float()
+        
+
+        
         y_len_unsorted = data['len']
         y_len_max = max(y_len_unsorted)
         x_unsorted = x_unsorted[:, 0:y_len_max, :]
         y_unsorted = y_unsorted[:, 0:y_len_max, :]
         # initialize lstm hidden state according to batch size
-        rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
+        #rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
         # output.hidden = output.init_hidden(batch_size=x_unsorted.size(0)*x_unsorted.size(1))
 
         # sort input
@@ -484,9 +489,13 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
         # print('y',y.size())
         # print('output_y',output_y.size())
 
+        if use_Z:
+            Z = data['Z'].float()
+        else:
+            Z = Variable(torch.zeros(len(y_len),2)).to(device)
 
         # if using ground truth to train
-        h = rnn(x, pack=True, input_len=y_len)
+        h = rnn(x, Z, pack=True, input_len=y_len)
         h = pack_padded_sequence(h,y_len,batch_first=True).data # get packed hidden vector
         # reverse h
         idx = [i for i in range(h.size(0) - 1, -1, -1)]
@@ -525,7 +534,7 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
 
 
 def test_rnn_epoch(epoch, args, rnn, output, test_batch_size=16):
-    rnn.hidden = rnn.init_hidden(test_batch_size)
+    #rnn.hidden = rnn.init_hidden(test_batch_size)
     rnn.eval()
     output.eval()
 
@@ -533,8 +542,13 @@ def test_rnn_epoch(epoch, args, rnn, output, test_batch_size=16):
     max_num_node = int(args.max_num_node)
     y_pred_long = Variable(torch.zeros(test_batch_size, max_num_node, args.max_prev_node)).to(device) # discrete prediction
     x_step = Variable(torch.ones(test_batch_size,1,args.max_prev_node)).to(device)
+    
+    # initialize testing Z
+    # TODO: make this vary based on input Z
+    Z = Variable(torch.zeros(len(y_len),2)).to(device)
+    h = rnn(x_step,Z)
     for i in range(max_num_node):
-        h = rnn(x_step)
+        
         # output.hidden = h.permute(1,0,2)
         hidden_null = Variable(torch.zeros(args.num_layers - 1, h.size(0), h.size(2))).to(device)
         output.hidden = torch.cat((h.permute(1,0,2), hidden_null),
@@ -548,6 +562,8 @@ def test_rnn_epoch(epoch, args, rnn, output, test_batch_size=16):
             output.hidden = Variable(output.hidden.data).to(device)
         y_pred_long[:, i:i + 1, :] = x_step
         rnn.hidden = Variable(rnn.hidden.data).to(device)
+        
+        h = rnn(x_step)
     y_pred_long_data = y_pred_long.data.long()
 
     # save graphs as pickle
