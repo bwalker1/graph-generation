@@ -324,6 +324,7 @@ class GRU_plain(nn.Module):
             if input_len is None:
                 raise ValueError
             batch_size = len(input_len)
+            # Run Z through the network and then reshape it accordingly
             self.hidden = self.hidden_net(Z).view(batch_size,self.num_layers,self.hidden_size).transpose(0,1)
         
         output_raw, self.hidden = self.rnn(input, self.hidden)

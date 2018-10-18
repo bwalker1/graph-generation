@@ -533,7 +533,7 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
 
 
 
-def test_rnn_epoch(epoch, args, rnn, output, test_batch_size=16):
+def test_rnn_epoch(epoch, args, rnn, output, test_batch_size=16, Z_list = None):
     #rnn.hidden = rnn.init_hidden(test_batch_size)
     rnn.eval()
     output.eval()
@@ -545,7 +545,11 @@ def test_rnn_epoch(epoch, args, rnn, output, test_batch_size=16):
     
     # initialize testing Z
     # TODO: make this vary based on input Z
-    Z = Variable(torch.zeros(len(y_len),2)).to(device)
+    if Z_list is None:
+        Z = Variable(torch.zeros(len(y_len),2)).to(device)
+    else:
+        # TODO: sample Z from Z_list
+        pass
     h = rnn(x_step,Z)
     for i in range(max_num_node):
         
