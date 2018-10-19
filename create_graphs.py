@@ -3,6 +3,7 @@ import numpy as np
 
 from utils import *
 from data import *
+from sbm import *
 
 def create(args):
 ### load datasets
@@ -100,6 +101,9 @@ def create(args):
             for j in range(36, 46):
                 graphs.append(nx.grid_2d_graph(i, j))
         args.max_prev_node = 90
+
+    elif args.graph_type=='sbm':
+        return generateSetOfSBM([2,3,4])
 
     elif 'barabasi_noise' in args.graph_type:
         graphs = []

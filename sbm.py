@@ -27,6 +27,7 @@ def generateSingleSBM(block, P):
     g = nx.generators.community.stochastic_block_model(block, P, seed = 0)
     return g
 
+
 def generateSetOfSBM(blockSizes):
     # Generates a collection of graph
 
@@ -41,7 +42,7 @@ def generateSetOfSBM(blockSizes):
         g = generateSingleSBM(block, P)
         z = [0] * maxLabel
         z[len(block) - 1] = 1
-        g.graph['z'] = z
+        g.graph['Z'] = z
         G.append(g)
     return G
 

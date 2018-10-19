@@ -15,6 +15,9 @@ class Args():
         # The dependent Bernoulli sequence version of GraphRNN
         self.note = 'GraphRNN_RNN'
 
+        ### Whether we are doing conditional generation
+        self.conditional = True
+
         ## for comparison, removing the BFS compoenent
         # self.note = 'GraphRNN_MLP_nobfs'
         # self.note = 'GraphRNN_RNN_nobfs'
@@ -22,7 +25,7 @@ class Args():
         ### Which dataset is used to train the model
         # self.graph_type = 'DD'
         # self.graph_type = 'caveman'
-        self.graph_type = 'caveman_small'
+        # self.graph_type = 'caveman_small'
         # self.graph_type = 'caveman_small_single'
         # self.graph_type = 'community4'
         # self.graph_type = 'grid'
@@ -35,6 +38,8 @@ class Args():
         # self.graph_type = 'barabasi_small'
         # self.graph_type = 'citeseer'
         # self.graph_type = 'citeseer_small'
+
+        self.graph_type = 'sbm'
 
         # self.graph_type = 'barabasi_noise'
         # self.noise = 10
