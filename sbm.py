@@ -28,10 +28,10 @@ def generateSingleSBM(block, P):
     return g
 
 def generateSetOfSBM(blockSizes):
-    # Generates a collection of graph
+    # Generates a collection of sbms
 
     # Input Parameters:
-    # blockSizes: This is a list of list. Each list contains block sizes of communities for a graph.
+    # blockSizes: This is a list of list. Each list contains block sizes of communities for a sbm.
     G = []
     labelSet = [len(block) for block in blockSizes]
     maxLabel = max(labelSet)
@@ -49,14 +49,14 @@ def generateSetOfSBM(blockSizes):
 if __name__ == '__main__':
     nGraphs = 5
     nNodes = random.sample(range(20, 50), nGraphs) # Choosing the number of nodes in a graph
-    labels = random.sample(range(2, 8), nGraphs) # Choosing number of communities
+    labels = random.sample(range(1, 8), nGraphs) # Choosing number of communities
     blocks = [[nNodes[i] // labels[i]] * labels[i] for i in range(0, nGraphs)]
     G = generateSetOfSBM(blocks)
 
     i = 0
     for g in G:
         print('\nNumber of nodes: ', len(g))
-        print('\nNumber of communities: ', labels[i])
+        print('Number of communities: ', labels[i])
         nx.draw(g)
         plt.show()
         i = i + 1
