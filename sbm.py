@@ -52,6 +52,7 @@ if __name__ == '__main__':
     nNodes = random.sample(range(20, 50), nGraphs) # Choosing the number of nodes in a graph
     labels = random.sample(range(2, 8), nGraphs) # Choosing number of communities
     blocks = [[nNodes[i] // labels[i]] * labels[i] for i in range(0, nGraphs)]
+    print(blocks)
     G = generateSetOfSBM(blocks)
 
     i = 0

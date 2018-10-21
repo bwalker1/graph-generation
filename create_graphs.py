@@ -102,8 +102,9 @@ def create(args):
                 graphs.append(nx.grid_2d_graph(i, j))
         args.max_prev_node = 90
 
-    elif args.graph_type=='sbm':
-        return generateSetOfSBM([2,3,4])
+    elif args.graph_type == 'sbm':
+        N = 100
+        return generateSetOfSBM([[N // x]*x for x in [2, 3, 4]*100])
 
     elif 'barabasi_noise' in args.graph_type:
         graphs = []
