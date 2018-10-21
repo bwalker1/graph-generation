@@ -4,7 +4,7 @@ import warnings
 warnings.warn = warn
 
 from train import *
-
+import sys
 
 
 if __name__ == '__main__':
@@ -14,8 +14,13 @@ if __name__ == '__main__':
     # All necessary arguments are defined in args.py
     args = Args()
     
-    if sys.argc > 1 and sys.argv[1] == "conditional":
+    if len(sys.argv) > 1 and sys.argv[1] == "conditional":
         args.conditional = True
+        
+    if args.conditional:
+        print("Using conditional input")
+    else:
+        print("Not using conditional input")
     os.environ['CUDA_VISIBLE_DEVICES'] = str(args.cuda)
     print('CUDA', args.cuda)
     print('File name prefix',args.fname)
