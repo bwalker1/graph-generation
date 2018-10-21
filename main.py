@@ -13,6 +13,9 @@ if __name__ == '__main__':
     print("Main is using "+('cuda:0' if torch.cuda.is_available() else 'cpu'))
     # All necessary arguments are defined in args.py
     args = Args()
+    
+    if sys.argc > 1 and sys.argv[1] == "conditional":
+        args.conditional = True
     os.environ['CUDA_VISIBLE_DEVICES'] = str(args.cuda)
     print('CUDA', args.cuda)
     print('File name prefix',args.fname)
@@ -124,6 +127,12 @@ if __name__ == '__main__':
     # lstm = LSTM_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_lstm,
     #                   hidden_size=args.hidden_size, num_layers=args.num_layers).to(device)
 
+    # check whether we're using conditional input
+    if args.conditional:
+        graph_embedding_size = 2
+    else:
+        graph_embedding_size = None
+    
     if 'GraphRNN_VAE_conditional' in args.note:
         rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
                         hidden_size=args.hidden_size_rnn, num_layers=args.num_layers, has_input=True,
@@ -136,7 +145,7 @@ if __name__ == '__main__':
         output = MLP_plain(h_size=args.hidden_size_rnn, embedding_size=args.embedding_size_output, y_size=args.max_prev_node).to(device)
     elif 'GraphRNN_RNN' in args.note:
         rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
-                        hidden_size=args.hidden_size_rnn, num_layers=args.num_layers, graph_embedding_size=2, has_input=True,
+                        hidden_size=args.hidden_size_rnn, num_layers=args.num_layers, graph_embedding_size=graph_embedding_size, has_input=True,
                         has_output=True, output_size=args.hidden_size_rnn_output).to(device)
         output = GRU_plain(input_size=1, embedding_size=args.embedding_size_rnn_output,
                            hidden_size=args.hidden_size_rnn_output, num_layers=args.num_layers, has_input=True,

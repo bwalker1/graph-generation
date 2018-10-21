@@ -16,7 +16,7 @@ class Args():
         self.note = 'GraphRNN_RNN'
 
         ### Whether we are doing conditional generation
-        self.conditional = True
+        self.conditional = False
 
         ## for comparison, removing the BFS compoenent
         # self.note = 'GraphRNN_MLP_nobfs'

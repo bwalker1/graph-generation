@@ -24,7 +24,7 @@ def generateSingleSBM(block, P):
     # Input Parameters:
     # block is an array of sizes of each block(community)
     # P is the block matrix
-    g = nx.generators.community.stochastic_block_model(block, P, seed = 0)
+    g = nx.generators.community.stochastic_block_model(block, P)
     return g
 
 

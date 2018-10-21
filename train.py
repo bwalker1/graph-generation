@@ -491,8 +491,10 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
 
         if use_Z:
             Z = data['Z'].float()
+            Z = Variable(Z).to(device)
         else:
-            Z = Variable(torch.zeros(len(y_len),2)).to(device)
+            rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
+            Z = None
 
         # if using ground truth to train
         h = rnn(x, Z, pack=True, input_len=y_len)
@@ -595,10 +597,18 @@ def train_rnn_forward_epoch(epoch, args, rnn, output, data_loader):
         y_len_max = max(y_len_unsorted)
         x_unsorted = x_unsorted[:, 0:y_len_max, :]
         y_unsorted = y_unsorted[:, 0:y_len_max, :]
-        # initialize lstm hidden state according to batch size
-        rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
-        # output.hidden = output.init_hidden(batch_size=x_unsorted.size(0)*x_unsorted.size(1))
+        
 
+        # output.hidden = output.init_hidden(batch_size=x_unsorted.size(0)*x_unsorted.size(1))
+        
+        if rnn.use_Z:
+            Z = data['Z'].float()
+            Z = Variable(Z).to(device)
+        else:
+            # initialize lstm hidden state according to batch size
+            rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
+            Z = None
+        
         # sort input
         y_len,sort_index = torch.sort(y_len_unsorted,0,descending=True)
         y_len = y_len.numpy().tolist()
@@ -633,7 +643,8 @@ def train_rnn_forward_epoch(epoch, args, rnn, output, data_loader):
         # print('output_y',output_y.size())
 
         # if using ground truth to train
-        h = rnn(x, pack=True, input_len=y_len)
+        print(Z)
+        h = rnn(x, Z, pack=True, input_len=y_len)
         h = pack_padded_sequence(h,y_len,batch_first=True).data # get packed hidden vector
         # reverse h
         idx = [i for i in range(h.size(0) - 1, -1, -1)]

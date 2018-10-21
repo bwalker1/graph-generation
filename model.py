@@ -299,9 +299,10 @@ class GRU_plain(nn.Module):
         
         # TODO: get this shaped right
         if graph_embedding_size is not None:
+            self.use_Z = True
             self.hidden_net = nn.Linear(graph_embedding_size,self.num_layers*self.hidden_size)
         else:
-            self.hidden_net = None
+            self.use_Z = False
 
         for name, param in self.rnn.named_parameters():
             if 'bias' in name:
@@ -327,9 +328,9 @@ class GRU_plain(nn.Module):
             if input_len is None:
                 # need to provide input_len so we know batch size
                 raise ValueError
-            if self.hidden_net is None:
+            if self.use_Z == False:
                 # rnn was created without a graph embedding size and has no Z init network
-                raise ValueError
+                raise RuntimeError
             batch_size = len(input_len)
             # Run Z through the network and then reshape it accordingly
             self.hidden = self.hidden_net(Z).view(batch_size,self.num_layers,self.hidden_size).transpose(0,1)
