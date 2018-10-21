@@ -273,7 +273,7 @@ class LSTM_plain(nn.Module):
 
 # plain GRU model
 class GRU_plain(nn.Module):
-    def __init__(self, input_size, embedding_size, hidden_size, num_layers, has_input=True, has_output=False, output_size=None):
+    def __init__(self, input_size, embedding_size, hidden_size, num_layers, graph_embedding_size = None, has_input=True, has_output=False, output_size=None):
         super(GRU_plain, self).__init__()
         self.num_layers = num_layers
         self.hidden_size = hidden_size
@@ -298,7 +298,7 @@ class GRU_plain(nn.Module):
         self.hidden = None  # need initialize before forward run
         
         # TODO: get this shaped right
-        self.hidden_net = nn.Linear(2,self.num_layers*self.hidden_size)
+        self.hidden_net = nn.Linear(graph_embedding_size,self.num_layers*self.hidden_size)
 
         for name, param in self.rnn.named_parameters():
             if 'bias' in name:
