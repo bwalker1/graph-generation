@@ -273,7 +273,7 @@ class LSTM_plain(nn.Module):
 
 # plain GRU model
 class GRU_plain(nn.Module):
-    def __init__(self, input_size, embedding_size, hidden_size, num_layers, graph_embedding_size = None, has_input=True, has_output=False, output_size=None):
+    def __init__(self, input_size, embedding_size, hidden_size, num_layers, graph_embedding_size=None, has_input=True, has_output=False, output_size=None):
         super(GRU_plain, self).__init__()
         self.num_layers = num_layers
         self.hidden_size = hidden_size
@@ -298,7 +298,10 @@ class GRU_plain(nn.Module):
         self.hidden = None  # need initialize before forward run
         
         # TODO: get this shaped right
-        self.hidden_net = nn.Linear(graph_embedding_size,self.num_layers*self.hidden_size)
+        if graph_embedding_size is not None:
+            self.hidden_net = nn.Linear(graph_embedding_size,self.num_layers*self.hidden_size)
+        else:
+            self.hidden_net = None
 
         for name, param in self.rnn.named_parameters():
             if 'bias' in name:
@@ -322,6 +325,10 @@ class GRU_plain(nn.Module):
             input = pack_padded_sequence(input, input_len, batch_first=True)
         if Z is not None:
             if input_len is None:
+                # need to provide input_len so we know batch size
+                raise ValueError
+            if self.hidden_net is None:
+                # rnn was created without a graph embedding size and has no Z init network
                 raise ValueError
             batch_size = len(input_len)
             # Run Z through the network and then reshape it accordingly

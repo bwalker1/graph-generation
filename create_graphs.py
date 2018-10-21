@@ -103,8 +103,10 @@ def create(args):
         args.max_prev_node = 90
 
     elif args.graph_type == 'sbm':
-        N = 100
-        return generateSetOfSBM([[N // x]*x for x in [2, 3, 4]*100])
+        N = 60
+        graphs = generateSetOfSBM([[N // x]*x for x in [2,4]*100])
+        
+        args.max_prev_node = 60
 
     elif 'barabasi_noise' in args.graph_type:
         graphs = []
