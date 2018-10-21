@@ -434,7 +434,6 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
     args = Args()
     # set up to work with or without cuda
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    print("train_rnn_epoch is using device " + ('cuda:0' if torch.cuda.is_available() else 'cpu'))
     rnn.train()
     output.train()
     loss_sum = 0
@@ -548,7 +547,7 @@ def test_rnn_epoch(epoch, args, rnn, output, test_batch_size=16, Z_list = None):
     # initialize testing Z
     # TODO: make this vary based on input Z
     if Z_list is None:
-        Z = Variable(torch.zeros(len(y_len),2)).to(device)
+        Z = None
     else:
         # TODO: sample Z from Z_list
         pass
