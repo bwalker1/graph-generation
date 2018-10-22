@@ -5,6 +5,7 @@ warnings.warn = warn
 
 from train import *
 import sys
+import argparse
 
 
 if __name__ == '__main__':
@@ -12,10 +13,13 @@ if __name__ == '__main__':
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     print("Main is using "+('cuda:0' if torch.cuda.is_available() else 'cpu'))
     # All necessary arguments are defined in args.py
-    args = Args()
-    
-    if len(sys.argv) > 1 and sys.argv[1] == "conditional":
-        args.conditional = True
+    args_default = Args()
+
+    # handle command line argument
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--conditional', default=True)
+    parser.set_defaults(**vars(args_default))
+    args = parser.parse_args()
         
     if args.conditional:
         print("Using conditional input")
