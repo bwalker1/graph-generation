@@ -17,8 +17,13 @@ if __name__ == '__main__':
 
     # handle command line argument
     parser = argparse.ArgumentParser()
-    parser.add_argument('--conditional', default=True)
-    parser.set_defaults(**vars(args_default))
+    
+    default_vars = vars(args_default)
+    for k,v in default_vars.items():
+        parser.add_argument('--'+k,default=v)
+    
+    #parser.add_argument('--conditional', default=True)
+    #parser.set_defaults(**vars(args_default))
     args = parser.parse_args()
         
     if args.conditional:

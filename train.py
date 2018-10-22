@@ -431,7 +431,6 @@ def train_mlp_forward_epoch(epoch, args, rnn, output, data_loader):
 def train_rnn_epoch(epoch, args, rnn, output, data_loader,
                     optimizer_rnn, optimizer_output,
                     scheduler_rnn, scheduler_output):
-    args = Args()
     # set up to work with or without cuda
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     rnn.train()
@@ -738,9 +737,9 @@ def train(args, dataset_train, rnn, output):
         # save model checkpoint
         if args.save:
             if epoch % args.epochs_save == 0:
-                fname = args.model_save_path + args.fname + 'lstm_' + str(epoch) + '.dat'
+                fname = args.model_save_path + args.fname + 'lstm_' + str(epoch) + '_cond=' + str(args.conditional) + '.dat'
                 torch.save(rnn.state_dict(), fname)
-                fname = args.model_save_path + args.fname + 'output_' + str(epoch) + '.dat'
+                fname = args.model_save_path + args.fname + 'output_' + str(epoch) + '_cond=' + str(args.conditional) + '.dat'
                 torch.save(output.state_dict(), fname)
         epoch += 1
     np.save(args.timing_save_path+args.fname,time_all)

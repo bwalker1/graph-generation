@@ -39,7 +39,7 @@ class Args():
         # self.graph_type = 'citeseer'
         # self.graph_type = 'citeseer_small'
 
-        self.graph_type = 'sbm'
+        self.graph_type = 'grid'
 
         # self.graph_type = 'barabasi_noise'
         # self.noise = 10
