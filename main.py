@@ -20,11 +20,21 @@ if __name__ == '__main__':
     
     default_vars = vars(args_default)
     for k,v in default_vars.items():
-        parser.add_argument('--'+k,default=v)
+        t = type(v)
+        if t==bool:
+            # boolean arguments should be handled differently than value arguments
+            parser.add_argument('--'+k,dest=k,action =  'store_true')
+            parser.add_argument('--no-'+k,dest=k,action = 'store_false')
+            parser.set_defaults(**{k:v})
+        else:
+            parser.add_argument('--'+k,dest=k,default=v,type=t)
+            
+        
     
     #parser.add_argument('--conditional', default=True)
     #parser.set_defaults(**vars(args_default))
     args = parser.parse_args()
+    print(args)
         
     if args.conditional:
         print("Using conditional input")
@@ -130,7 +140,9 @@ if __name__ == '__main__':
         args.max_prev_node = args.max_num_node - 1
     else:
         print(args.max_prev_node)
-        dataset = Graph_sequence_sampler_pytorch(graphs_train, max_prev_node=args.max_prev_node, max_num_node=args.max_num_node, use_classes=args.conditional)
+        dataset = Graph_sequence_sampler_pytorch(graphs_train, max_prev_node=args.max_prev_node, max_num_node=args.max_num_node, use_classes=args.conditional, iteration=args.max_prev_node_iter)
+        if args.max_prev_node is None:
+            args.max_prev_node = dataset.max_prev_node
     sample_strategy = torch.utils.data.sampler.WeightedRandomSampler([1.0 / len(dataset) for i in range(len(dataset))],
                                                                      num_samples=args.batch_size*args.batch_ratio, replacement=True)
     dataset_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, num_workers=args.num_workers,
