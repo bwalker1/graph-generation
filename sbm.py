@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 import random
 import numpy as np
 
-def generateRandomBlockMatrix(blockSize, n, cin = 10, cout = 1):
+def generateRandomBlockMatrix(blockSize, n, cin = 5, cout = 0.5):
     # This function generates a random block matrix P
 
     # Input Parameters:

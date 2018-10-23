@@ -6,7 +6,7 @@ warnings.warn = warn
 from train import *
 import sys
 import argparse
-
+import collections
 
 if __name__ == '__main__':
     # set up to work with or without cuda
@@ -71,7 +71,16 @@ if __name__ == '__main__':
     generate_graphs = True
     if generate_graphs:
         graphs = create_graphs.create(args)
-    
+        
+        degree_sequence = sorted([d for G in graphs for n, d in G.degree()], reverse=True)  # degree sequence
+        # print "Degree sequence", degree_sequence
+        degreeCount = collections.Counter(degree_sequence)
+        deg, cnt = zip(*degreeCount.items())
+
+        fig, ax = plt.subplots()
+        plt.bar(deg, cnt, width=0.80, color='b')
+        plt.show()
+        
         # split datasets
         random.seed(123)
         shuffle(graphs)
