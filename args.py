@@ -97,7 +97,7 @@ class Args():
 
 
         self.load = False # if load model, default lr is very low
-        self.load_epoch = 3000
+        self.load_epoch = 500
         self.save = True
         
         self.max_prev_node_iter = 20000

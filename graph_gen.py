@@ -26,6 +26,8 @@ import time as tm
 # Z is the embedding or a matrix of embeddings to generate multiple graphs
 def graph_gen(rnn,output,Z,max_prev_node,max_num_node,test_batch_size):
     # generate graphs
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    Z = Variable(Z).to(device)
     y_pred_long = Variable(torch.zeros(test_batch_size, max_num_node, max_prev_node)).to(device) # discrete prediction
     x_step = Variable(torch.ones(test_batch_size,1,max_prev_node)).to(device)
     

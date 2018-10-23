@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 import random
 import numpy as np
 
-def generateRandomBlockMatrix(blockSize, probIntraCommunityRange = [0.8, 1.0], probInterCommunityRange = [0.01, 0.04]):
+def generateRandomBlockMatrix(blockSize, n, cin = 10, cout = 1):
     # This function generates a random block matrix P
 
     # Input Parameters:
@@ -11,8 +11,8 @@ def generateRandomBlockMatrix(blockSize, probIntraCommunityRange = [0.8, 1.0], p
     # probIntraCommunityRange: probability range of edges within the each community
     # probInterCommunityRange: probability range of edges across communities
 
-    probIntraCommunity = np.diag((probIntraCommunityRange[1] - probIntraCommunityRange[0]) * np.random.random_sample(blockSize) + probIntraCommunityRange[0])
-    probInterCommunity = ((probInterCommunityRange[1] - probInterCommunityRange[0]) * np.random.random_sample((blockSize, blockSize)) + probInterCommunityRange[0]) * (1 - np.diag(np.ones(blockSize)))
+    probIntraCommunity = (cin/(n/blockSize - 1)) * np.diag(np.ones(blockSize))
+    probInterCommunity = (cout/((n/blockSize)*(blockSize-1))) * (1 - np.diag(np.ones(blockSize)))
     P = probIntraCommunity + probInterCommunity
     P = (P + np.transpose(P))/2 # make it symmetric
     return P.tolist()
@@ -38,7 +38,7 @@ def generateSetOfSBM(blockSizes):
     maxLabel = max(labelSet)
 
     for block in blockSizes:
-        P = generateRandomBlockMatrix(len(block))
+        P = generateRandomBlockMatrix(len(block),np.sum(block))
         g = generateSingleSBM(block, P)
         z = [0] * maxLabel
         z[len(block) - 1] = 1

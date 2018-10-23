@@ -539,7 +539,7 @@ def test_rnn_epoch(epoch, args, rnn, output, test_batch_size=16, Z_list = None):
     rnn.eval()
     output.eval()
     
-     initialize testing Z
+    # initialize testing Z
     # TODO: make this vary based on input Z
     if Z_list is None:
         Z = None
