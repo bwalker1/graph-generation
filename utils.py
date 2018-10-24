@@ -13,6 +13,7 @@ from sklearn.decomposition import PCA
 import community
 import pickle
 import re
+import collections
 
 import data
 
@@ -506,6 +507,16 @@ def test_perturbed():
     g_perturbed = perturb(graphs, 0.9)
     print([g.number_of_edges() for g in graphs])
     print([g.number_of_edges() for g in g_perturbed])
+    
+    
+def plot_degree_distribution(graphs):
+    degree_sequence = sorted([d for G in graphs for n, d in G.degree()], reverse=True)  # degree sequence
+    # print "Degree sequence", degree_sequence
+    degreeCount = collections.Counter(degree_sequence)
+    deg, cnt = zip(*degreeCount.items())
+
+    fig, ax = plt.subplots()
+    plt.bar(deg, cnt, width=0.80, color='b')
 
 if __name__ == '__main__':
     #test_perturbed()

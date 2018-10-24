@@ -72,13 +72,7 @@ if __name__ == '__main__':
     if generate_graphs:
         graphs = create_graphs.create(args)
         
-        degree_sequence = sorted([d for G in graphs for n, d in G.degree()], reverse=True)  # degree sequence
-        # print "Degree sequence", degree_sequence
-        degreeCount = collections.Counter(degree_sequence)
-        deg, cnt = zip(*degreeCount.items())
-
-        fig, ax = plt.subplots()
-        plt.bar(deg, cnt, width=0.80, color='b')
+        plot_degree_distribution(graphs)
         plt.show()
         
         # split datasets
