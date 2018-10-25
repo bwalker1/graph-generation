@@ -4,6 +4,7 @@ import warnings
 warnings.warn = warn
 
 from train import *
+from args import *
 import sys
 import argparse
 import collections
@@ -45,7 +46,8 @@ if __name__ == '__main__':
         print("Not using conditional input")
     os.environ['CUDA_VISIBLE_DEVICES'] = str(args.cuda)
     print('CUDA', args.cuda)
-    print('File name prefix',args.fname)
+    fns = filenames(args)
+    print('File name prefix',fns.fname)
     # check if necessary directories exist
     if not os.path.isdir(args.model_save_path):
         os.makedirs(args.model_save_path)
@@ -72,8 +74,8 @@ if __name__ == '__main__':
     if generate_graphs:
         graphs = create_graphs.create(args)
         
-        plot_degree_distribution(graphs)
-        plt.show()
+        #plot_degree_distribution(graphs)
+        #plt.show()
         
         # split datasets
         random.seed(123)
@@ -82,6 +84,11 @@ if __name__ == '__main__':
         graphs_test = graphs[int(0.8 * graphs_len):]
         graphs_train = graphs[0:int(0.8*graphs_len)]
         graphs_validate = graphs[0:int(0.2*graphs_len)]
+        
+        if args.conditional:
+            Z_list = [G['Z'] for G in graphs]
+        else:
+            Z_list = None
 
         # if use pre-saved graphs
         # dir_input = "/dfs/scratch0/jiaxuany0/graphs/"
@@ -120,9 +127,9 @@ if __name__ == '__main__':
 
         # save ground truth graphs
         ## To get train and test set, after loading you need to manually slice
-        save_graph_list(graphs, args.graph_save_path + args.fname_train + '0.dat')
-        save_graph_list(graphs, args.graph_save_path + args.fname_test + '0.dat')
-        print('train and test graphs saved at: ', args.graph_save_path + args.fname_test + '0.dat')
+        save_graph_list(graphs, args.graph_save_path + fns.fname_train + '0.dat')
+        save_graph_list(graphs, args.graph_save_path + fns.fname_test + '0.dat')
+        print('train and test graphs saved at: ', args.graph_save_path + fns.fname_test + '0.dat')
 
         ### comment when normal training, for graph completion only
         # p = 0.5
@@ -187,18 +194,18 @@ if __name__ == '__main__':
 
 
     ### start training
-    #train(args, dataset_loader, rnn, output)
+    #train(args, dataset_loader, rnn, output, Z_list)
     
     ### plot sample graphs
     # plot some graphs
-    fname = args.model_save_path + args.fname + 'lstm_' + str(args.load_epoch) + '.dat'
-    rnn.load_state_dict(torch.load(fname))
-    fname = args.model_save_path + args.fname + 'output_' + str(args.load_epoch) + '.dat'
-    output.load_state_dict(torch.load(fname))
+    #fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '.dat'
+    #rnn.load_state_dict(torch.load(fname))
+    #fname = args.model_save_path + fns.fname + 'output_' + str(args.load_epoch) + '.dat'
+    #output.load_state_dict(torch.load(fname))
 
-    args.lr = 0.00001
-    epoch = args.load_epoch
-    print('model loaded!, lr: {}'.format(args.lr))
+    #args.lr = 0.00001
+    #epoch = args.load_epoch
+    #print('model loaded!, lr: {}'.format(args.lr))
     
     ### graph completion
     # train_graph_completion(args,dataset_loader,rnn,output)

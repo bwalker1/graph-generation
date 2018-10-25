@@ -78,6 +78,8 @@ class Args():
         self.epochs_test = 100
         self.epochs_log = 1
         self.epochs_save = 100
+        
+        self.run_id = 0
 
         self.lr = 0.003
         self.milestones = [400, 1000]
@@ -110,12 +112,14 @@ class Args():
         # self.metric_baseline = 'general'
         # self.metric_baseline = 'degree'
         self.metric_baseline = 'clustering'
-
-
+        
+        
+class filenames():
+    def __init__(self,args):
         ### filenames to save intemediate and final outputs
-        self.fname = self.note + '_' + self.graph_type + '_' + str(self.num_layers) + '_' + str(self.hidden_size_rnn) + '_'
-        self.fname_pred = self.note+'_'+self.graph_type+'_'+str(self.num_layers)+'_'+ str(self.hidden_size_rnn)+'_pred_'
-        self.fname_train = self.note+'_'+self.graph_type+'_'+str(self.num_layers)+'_'+ str(self.hidden_size_rnn)+'_train_'
-        self.fname_test = self.note + '_' + self.graph_type + '_' + str(self.num_layers) + '_' + str(self.hidden_size_rnn) + '_test_'
-        self.fname_baseline = self.graph_save_path + self.graph_type + self.generator_baseline+'_'+self.metric_baseline
+        self.fname = args.note + '_' + str(args.run_id) + '_' + args.graph_type + '_' + str(args.num_layers) + '_' + str(args.hidden_size_rnn) + '_'
+        self.fname_pred = args.note+'_'+ str(args.run_id) + '_'  +args.graph_type+'_'+str(args.num_layers)+'_'+ str(args.hidden_size_rnn)+'_pred_'
+        self.fname_train = args.note+'_' +str(args.run_id) + '_'  +args.graph_type+'_'+str(args.num_layers)+'_'+ str(args.hidden_size_rnn)+'_train_'
+        self.fname_test = args.note + '_' + str(args.run_id) + '_'  + args.graph_type + '_' + str(args.num_layers) + '_' + str(args.hidden_size_rnn) + '_test_'
+        self.fname_baseline = args.graph_save_path + str(args.run_id) + '_' +  args.graph_type + args.generator_baseline+'_'+args.metric_baseline
 

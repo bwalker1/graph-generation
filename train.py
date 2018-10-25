@@ -545,7 +545,7 @@ def test_rnn_epoch(epoch, args, rnn, output, test_batch_size=16, Z_list = None):
         Z = None
     else:
         # TODO: sample Z from Z_list
-        pass
+        Z = np.array(random.sample(Z_list,k=test_batch_size))
 
     return graph_gen(rnn,output,Z,int(args.max_prev_node),int(args.max_num_node),test_batch_size)
 
@@ -644,7 +644,7 @@ def train_rnn_forward_epoch(epoch, args, rnn, output, data_loader):
 
 
 ########### train function for LSTM + VAE
-def train(args, dataset_train, rnn, output):
+def train(args, dataset_train, rnn, output, Z_list = None):
     # check if load existing model
     if args.load:
         fname = args.model_save_path + args.fname + 'lstm_' + str(args.load_epoch) + '.dat'
@@ -694,7 +694,7 @@ def train(args, dataset_train, rnn, output):
                     elif 'GraphRNN_MLP' in args.note:
                         G_pred_step = test_mlp_epoch(epoch, args, rnn, output, test_batch_size=args.test_batch_size,sample_time=sample_time)
                     elif 'GraphRNN_RNN' in args.note:
-                        G_pred_step = test_rnn_epoch(epoch, args, rnn, output, test_batch_size=args.test_batch_size)
+                        G_pred_step = test_rnn_epoch(epoch, args, rnn, output, test_batch_size=args.test_batch_size,Z_list=Z_list)
                     G_pred.extend(G_pred_step)
                 # save graphs
                 fname = args.graph_save_path + args.fname_pred + str(epoch) +'_'+str(sample_time) + '.dat'
