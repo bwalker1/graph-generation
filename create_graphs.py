@@ -104,7 +104,7 @@ def create(args):
 
     elif args.graph_type == 'sbm_large':
         N = 200
-        graphs = generateSetOfSBM([[N // x]*x for x in [2,]*500])
+        graphs = generateSetOfSBM([[N // x]*x for x in [2,4]*500])
         
         args.max_prev_node = 120
 

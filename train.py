@@ -24,7 +24,7 @@ import time as tm
 from utils import *
 from model import *
 from data import *
-from args import Args
+from args import *
 import create_graphs
 from graph_gen import *
 
@@ -645,11 +645,13 @@ def train_rnn_forward_epoch(epoch, args, rnn, output, data_loader):
 
 ########### train function for LSTM + VAE
 def train(args, dataset_train, rnn, output, Z_list = None):
+    # get the filenames that we'll need for saving
+    fns = filenames(args)
     # check if load existing model
     if args.load:
-        fname = args.model_save_path + args.fname + 'lstm_' + str(args.load_epoch) + '.dat'
+        fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '.dat'
         rnn.load_state_dict(torch.load(fname))
-        fname = args.model_save_path + args.fname + 'output_' + str(args.load_epoch) + '.dat'
+        fname = args.model_save_path + fns.fname + 'output_' + str(args.load_epoch) + '.dat'
         output.load_state_dict(torch.load(fname))
 
         args.lr = 0.00001
@@ -697,7 +699,7 @@ def train(args, dataset_train, rnn, output, Z_list = None):
                         G_pred_step = test_rnn_epoch(epoch, args, rnn, output, test_batch_size=args.test_batch_size,Z_list=Z_list)
                     G_pred.extend(G_pred_step)
                 # save graphs
-                fname = args.graph_save_path + args.fname_pred + str(epoch) +'_'+str(sample_time) + '.dat'
+                fname = args.graph_save_path + fns.fname_pred + str(epoch) +'_'+str(sample_time) + '.dat'
                 save_graph_list(G_pred, fname)
                 if 'GraphRNN_RNN' in args.note:
                     break
@@ -707,9 +709,9 @@ def train(args, dataset_train, rnn, output, Z_list = None):
         # save model checkpoint
         if args.save:
             if epoch % args.epochs_save == 0:
-                fname = args.model_save_path + args.fname + 'lstm_' + str(epoch) + '_cond=' + str(args.conditional) + '.dat'
+                fname = args.model_save_path + fns.fname + 'lstm_' + str(epoch) + '_cond=' + str(args.conditional) + '.dat'
                 torch.save(rnn.state_dict(), fname)
-                fname = args.model_save_path + args.fname + 'output_' + str(epoch) + '_cond=' + str(args.conditional) + '.dat'
+                fname = args.model_save_path + fns.fname + 'output_' + str(epoch) + '_cond=' + str(args.conditional) + '.dat'
                 torch.save(output.state_dict(), fname)
         epoch += 1
     np.save(args.timing_save_path+args.fname,time_all)
