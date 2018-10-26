@@ -194,7 +194,7 @@ if __name__ == '__main__':
 
 
     ### start training
-    #train(args, dataset_loader, rnn, output, Z_list)
+    train(args, dataset_loader, rnn, output, Z_list)
     
     ### plot sample graphs
     # plot some graphs
