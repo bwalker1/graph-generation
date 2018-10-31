@@ -86,7 +86,7 @@ if __name__ == '__main__':
         graphs_validate = graphs[0:int(0.2*graphs_len)]
         
         if args.conditional:
-            Z_list = [G['Z'] for G in graphs]
+            Z_list = [G.graph['Z'] for G in graphs]
         else:
             Z_list = None
 
