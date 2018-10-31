@@ -649,10 +649,11 @@ def train(args, dataset_train, rnn, output, Z_list = None):
     fns = filenames(args)
     # check if load existing model
     if args.load:
+
         fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
-        rnn.load_state_dict(torch.load(fname))
+        rnn.load_state_dict(torch.load(fname,map_location='cpu'))
         fname = args.model_save_path + fns.fname + 'output_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
-        output.load_state_dict(torch.load(fname))
+        output.load_state_dict(torch.load(fname,map_location='cpu'))
 
         args.lr = 0.00001
         epoch = args.load_epoch

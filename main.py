@@ -5,6 +5,7 @@ warnings.warn = warn
 
 from train import *
 from args import *
+from graph_gen import *
 import sys
 import argparse
 import collections
@@ -198,14 +199,19 @@ if __name__ == '__main__':
     
     ### plot sample graphs
     # plot some graphs
-    #fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '.dat'
-    #rnn.load_state_dict(torch.load(fname))
-    #fname = args.model_save_path + fns.fname + 'output_' + str(args.load_epoch) + '.dat'
-    #output.load_state_dict(torch.load(fname))
+    fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
+    rnn.load_state_dict(torch.load(fname,map_location='cpu'))
+    fname = args.model_save_path + fns.fname + 'output_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
+    output.load_state_dict(torch.load(fname,map_location='cpu'))
 
     #args.lr = 0.00001
-    #epoch = args.load_epoch
-    #print('model loaded!, lr: {}'.format(args.lr))
+    epoch = args.load_epoch
+    print('model loaded!')
+    
+    # Generate a graph
+    G = graph_gen(args, rnn,output,torch.Tensor(([0,1])),args.max_prev_node,args.max_num_node,1)
+    draw_graph(G[0])
+    plt.show()
     
     ### graph completion
     # train_graph_completion(args,dataset_loader,rnn,output)

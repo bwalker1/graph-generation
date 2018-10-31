@@ -34,14 +34,15 @@ def generateSetOfSBM(blockSizes):
     # Input Parameters:
     # blockSizes: This is a list of list. Each list contains block sizes of communities for a graph.
     G = []
-    labelSet = [len(block) for block in blockSizes]
-    maxLabel = max(labelSet)
+    labelSet = {len(block) for block in blockSizes}
+    maxLabel = len(labelSet)
+    lookup = {k:v for v,k in enumerate(labelSet)}
 
     for block in blockSizes:
         P = generateRandomBlockMatrix(len(block),np.sum(block))
         g = generateSingleSBM(block, P)
         z = [0] * maxLabel
-        z[len(block) - 1] = 1
+        z[lookup[len(block)]] = 1
         g.graph['Z'] = z
         G.append(g)
     return G
