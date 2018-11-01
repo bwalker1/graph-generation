@@ -37,6 +37,19 @@ def create(args):
                 for k in range(10):
                     graphs.append(caveman_special(i,j, p_edge=0.3))
         args.max_prev_node = 100
+    elif args.graph_type=='caveman_small2':
+        # graphs = []
+        # for i in range(2,5):
+        #     for j in range(2,6):
+        #         for k in range(10):
+        #             graphs.append(nx.relaxed_caveman_graph(i, j, p=0.1))
+        graphs = []
+        for j in range(6, 11):
+            for k in range(20):
+                G = nx.relaxed_caveman_graph(2,int(1.5*j),p=0.15)
+                G.graph['Z'] = np.array([1,0])
+                graphs.append(G)
+        args.max_prev_node = 20
     elif args.graph_type=='caveman_small':
         # graphs = []
         # for i in range(2,5):
@@ -49,6 +62,34 @@ def create(args):
                 for k in range(20):
                     graphs.append(caveman_special(i, j, p_edge=0.8)) # default 0.8
         args.max_prev_node = 20
+    elif args.graph_type=='caveman_small3':
+        # graphs = []
+        # for i in range(2,5):
+        #     for j in range(2,6):
+        #         for k in range(10):
+        #             graphs.append(nx.relaxed_caveman_graph(i, j, p=0.1))
+        graphs = []
+        for j in range(6, 11):
+            for k in range(20):
+                #G = caveman_special(3,j,p_edge=1)
+                G = nx.relaxed_caveman_graph(3,j,p=0.15)
+                G.graph['Z'] = np.array([0,1])
+                graphs.append(G)
+        args.max_prev_node = 20
+    elif args.graph_type=='caveman_small_mixed':
+        graphs = []
+        for j in range(6, 11):
+            for k in range(20):
+                G = nx.relaxed_caveman_graph(2,int(1.5*j),p=0.15)
+                G.graph['Z'] = np.array([1,0])
+                graphs.append(G)
+        for j in range(6, 11):
+            for k in range(20):
+                #G = caveman_special(3,j,p_edge=1)
+                G = nx.relaxed_caveman_graph(3,j,p=0.15)
+                G.graph['Z'] = np.array([0,1])
+                graphs.append(G)
+        args.max_prev_node = 30
     elif args.graph_type=='caveman_small_single':
         # graphs = []
         # for i in range(2,5):

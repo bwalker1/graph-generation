@@ -79,12 +79,14 @@ if __name__ == '__main__':
         #plt.show()
         
         # split datasets
-        random.seed(123)
+        #random.seed(123)
         shuffle(graphs)
         graphs_len = len(graphs)
         graphs_test = graphs[int(0.8 * graphs_len):]
         graphs_train = graphs[0:int(0.8*graphs_len)]
         graphs_validate = graphs[0:int(0.2*graphs_len)]
+        
+        draw_graph(graphs[-1],'example')
         
         if args.conditional:
             Z_list = [G.graph['Z'] for G in graphs]
@@ -196,7 +198,7 @@ if __name__ == '__main__':
 
     ### start training
     train(args, dataset_loader, rnn, output, Z_list)
-    
+    exit(0)
     ### plot sample graphs
     # plot some graphs
     fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
@@ -211,7 +213,6 @@ if __name__ == '__main__':
     # Generate a graph
     G = graph_gen(args, rnn,output,torch.Tensor(([0,1])),args.max_prev_node,args.max_num_node,1)
     draw_graph(G[0])
-    plt.show()
     
     ### graph completion
     # train_graph_completion(args,dataset_loader,rnn,output)

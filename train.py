@@ -715,7 +715,7 @@ def train(args, dataset_train, rnn, output, Z_list = None):
                 fname = args.model_save_path + fns.fname + 'output_' + str(epoch) + '_cond=' + str(args.conditional) + '.dat'
                 torch.save(output.state_dict(), fname)
         epoch += 1
-    np.save(args.timing_save_path+args.fname,time_all)
+    np.save(args.timing_save_path+fns.fname,time_all)
 
 
 ########### for graph completion task
