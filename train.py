@@ -438,7 +438,7 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
     output.train()
     loss_sum = 0
     
-    use_Z = False
+    use_Z = rnn.use_Z
     for batch_idx, data in enumerate(data_loader):
         rnn.zero_grad()
         output.zero_grad()
