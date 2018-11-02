@@ -74,7 +74,8 @@ if __name__ == '__main__':
     generate_graphs = True
     if generate_graphs:
         graphs = create_graphs.create(args)
-        
+        draw_graph(graphs[0],'caveman')
+        draw_graph(graphs[-1],'grid')
         #plot_degree_distribution(graphs)
         #plt.show()
         
@@ -86,7 +87,7 @@ if __name__ == '__main__':
         graphs_train = graphs[0:int(0.8*graphs_len)]
         graphs_validate = graphs[0:int(0.2*graphs_len)]
         
-        draw_graph(graphs[-1],'example')
+        
         
         if args.conditional:
             Z_list = [G.graph['Z'] for G in graphs]
@@ -211,8 +212,8 @@ if __name__ == '__main__':
     print('model loaded!')
     
     # Generate a graph
-    G = graph_gen(args, rnn,output,torch.Tensor(([1,0])),args.max_prev_node,args.max_num_node,1)
-    draw_graph(G[0])
+    G = graph_gen(args, rnn,output,torch.Tensor(([[0,1]]*9)),args.max_prev_node,args.max_num_node,9)
+    draw_graph_list(G,row=3,col=3)
     
     ### graph completion
     # train_graph_completion(args,dataset_loader,rnn,output)

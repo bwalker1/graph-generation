@@ -91,9 +91,10 @@ def create(args):
 #                 graphs.append(G)
         for i in range(2,5):
             for j in range(2,6):
-                G = nx.grid_2d_graph(i,j)
-                G.graph['Z'] = np.array([0,1])
-                graphs.append(G)
+                for k in range(2):
+                    G = nx.grid_2d_graph(i,j)
+                    G.graph['Z'] = np.array([0,1])
+                    graphs.append(G)
         args.max_prev_node = 30
     elif args.graph_type=='caveman_small_single':
         # graphs = []
