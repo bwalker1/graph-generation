@@ -324,7 +324,7 @@ class GRU_plain(nn.Module):
             input = input_raw
         if pack:
             input = pack_padded_sequence(input, input_len, batch_first=True)
-        if Z is not None:
+        if Z is not None and self.use_Z:
             if input_len is None:
                 # need to provide input_len so we know batch size
                 raise ValueError

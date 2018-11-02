@@ -83,10 +83,15 @@ def create(args):
                 G = nx.relaxed_caveman_graph(2,int(1.5*j),p=0.15)
                 G.graph['Z'] = np.array([1,0])
                 graphs.append(G)
-        for j in range(6, 11):
-            for k in range(20):
-                #G = caveman_special(3,j,p_edge=1)
-                G = nx.relaxed_caveman_graph(3,j,p=0.15)
+        # for j in range(6, 11):
+#             for k in range(20):
+#                 #G = caveman_special(3,j,p_edge=1)
+#                 G = nx.relaxed_caveman_graph(3,j,p=0.15)
+#                 G.graph['Z'] = np.array([0,1])
+#                 graphs.append(G)
+        for i in range(2,5):
+            for j in range(2,6):
+                G = nx.grid_2d_graph(i,j)
                 G.graph['Z'] = np.array([0,1])
                 graphs.append(G)
         args.max_prev_node = 30

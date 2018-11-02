@@ -211,7 +211,7 @@ if __name__ == '__main__':
     print('model loaded!')
     
     # Generate a graph
-    G = graph_gen(args, rnn,output,torch.Tensor(([0,1])),args.max_prev_node,args.max_num_node,1)
+    G = graph_gen(args, rnn,output,torch.Tensor(([1,0])),args.max_prev_node,args.max_num_node,1)
     draw_graph(G[0])
     
     ### graph completion
