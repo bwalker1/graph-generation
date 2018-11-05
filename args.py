@@ -4,7 +4,7 @@ class Args():
     def __init__(self):
         # control what main.py does
         self.train = True
-        self.draw_graphs = False
+        self.make_graph_list = False
 
         # whether we use tensorboard logging
         self.use_tensorboard = False
@@ -116,6 +116,10 @@ class Args():
         # self.metric_baseline = 'general'
         # self.metric_baseline = 'degree'
         self.metric_baseline = 'clustering'
+
+
+        # output graph list options
+        self.output_set_length=1000
         
         
 class filenames():

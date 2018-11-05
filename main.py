@@ -203,17 +203,13 @@ if __name__ == '__main__':
     if args.train:
         train(args, dataset_loader, rnn, output, Z_list)
 
-    if args.draw_graphs:
-        ### plot sample graphs
-        # plot some graphs
-        fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
-        rnn.load_state_dict(torch.load(fname,map_location='cpu'))
-        fname = args.model_save_path + fns.fname + 'output_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
-        output.load_state_dict(torch.load(fname,map_location='cpu'))
-
-        #args.lr = 0.00001
-        epoch = args.load_epoch
-        print('model loaded!')
+    if args.make_graph_list:
+        if not args.train:
+            # if we didn't just train, load something instead
+            fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
+            rnn.load_state_dict(torch.load(fname,map_location='cpu'))
+            fname = args.model_save_path + fns.fname + 'output_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
+            output.load_state_dict(torch.load(fname,map_location='cpu'))
 
         # Generate a graph
         G = graph_gen(args, rnn,output,torch.Tensor(([[0,1]]*9)),args.max_prev_node,args.max_num_node,9)
