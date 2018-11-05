@@ -211,9 +211,15 @@ if __name__ == '__main__':
             fname = args.model_save_path + fns.fname + 'output_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
             output.load_state_dict(torch.load(fname,map_location='cpu'))
 
-        # Generate a graph
-        G = graph_gen(args, rnn,output,torch.Tensor(([[0,1]]*9)),args.max_prev_node,args.max_num_node,9)
-        draw_graph_list(G,row=3,col=3)
+
+        # how many to generate
+        list_length = 1000
+        # desired Z value (if you're using conditonal
+        Z = [[1, 0]]*list_length if args.conditional else None
+        # Generate a graph list
+        G = graph_gen(args, rnn,output,torch.Tensor(Z),args.max_prev_node,args.max_num_node,list_length)
+        # save the graphs
+        save_graph_list(G, fns.fname_test2)
     
     ### graph completion
     # train_graph_completion(args,dataset_loader,rnn,output)

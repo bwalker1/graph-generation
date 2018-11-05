@@ -119,7 +119,8 @@ class Args():
 
 
         # output graph list options
-        self.output_set_length=1000
+        #self.output_set_length=1000
+        self.output_name="graph_list.dat"
         
         
 class filenames():
@@ -130,4 +131,5 @@ class filenames():
         self.fname_train = args.note+'_' +str(args.run_id) + '_'  +args.graph_type+'_'+str(args.num_layers)+'_'+ str(args.hidden_size_rnn)+'_train_'
         self.fname_test = args.note + '_' + str(args.run_id) + '_'  + args.graph_type + '_' + str(args.num_layers) + '_' + str(args.hidden_size_rnn) + '_test_'
         self.fname_baseline = args.graph_save_path + str(args.run_id) + '_' +  args.graph_type + args.generator_baseline+'_'+args.metric_baseline
+        self.fname_test2 = args.graph_save_path + str(args.run_id) + '_' + args.graph_type + args.generator_baseline + '_' + args.output_name
 
