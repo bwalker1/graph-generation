@@ -195,25 +195,29 @@ if __name__ == '__main__':
         output = GRU_plain(input_size=1, embedding_size=args.embedding_size_rnn_output,
                            hidden_size=args.hidden_size_rnn_output, num_layers=args.num_layers, has_input=True,
                            has_output=True, output_size=1).to(device)
+    else:
+        raise RuntimeError
 
 
     ### start training
-    train(args, dataset_loader, rnn, output, Z_list)
-    exit(0)
-    ### plot sample graphs
-    # plot some graphs
-    fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
-    rnn.load_state_dict(torch.load(fname,map_location='cpu'))
-    fname = args.model_save_path + fns.fname + 'output_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
-    output.load_state_dict(torch.load(fname,map_location='cpu'))
+    if args.train:
+        train(args, dataset_loader, rnn, output, Z_list)
 
-    #args.lr = 0.00001
-    epoch = args.load_epoch
-    print('model loaded!')
-    
-    # Generate a graph
-    G = graph_gen(args, rnn,output,torch.Tensor(([[0,1]]*9)),args.max_prev_node,args.max_num_node,9)
-    draw_graph_list(G,row=3,col=3)
+    if args.draw_graphs:
+        ### plot sample graphs
+        # plot some graphs
+        fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
+        rnn.load_state_dict(torch.load(fname,map_location='cpu'))
+        fname = args.model_save_path + fns.fname + 'output_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
+        output.load_state_dict(torch.load(fname,map_location='cpu'))
+
+        #args.lr = 0.00001
+        epoch = args.load_epoch
+        print('model loaded!')
+
+        # Generate a graph
+        G = graph_gen(args, rnn,output,torch.Tensor(([[0,1]]*9)),args.max_prev_node,args.max_num_node,9)
+        draw_graph_list(G,row=3,col=3)
     
     ### graph completion
     # train_graph_completion(args,dataset_loader,rnn,output)

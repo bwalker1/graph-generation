@@ -43,7 +43,7 @@ def generateSetOfSBM(blockSizes):
         g = generateSingleSBM(block, P)
         z = [0] * maxLabel
         z[lookup[len(block)]] = 1
-        g.graph['Z'] = z
+        g.graph['Z'] = np.array(z)
         G.append(g)
     return G
 

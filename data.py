@@ -445,7 +445,7 @@ class Graph_sequence_sampler_pytorch(torch.utils.data.Dataset):
         returndict = {'x': x_batch, 'y': y_batch, 'len': len_batch}
         
         if self.use_classes:
-            returndict['Z'] = self.Z_all[idx]
+            returndict['Z'] = torch.Tensor(self.Z_all[idx])
             
         return returndict
 

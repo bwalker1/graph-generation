@@ -2,6 +2,10 @@
 ### program configuration
 class Args():
     def __init__(self):
+        # control what main.py does
+        self.train = True
+        self.draw_graphs = False
+
         # whether we use tensorboard logging
         self.use_tensorboard = False
         ### if clean tensorboard
@@ -98,7 +102,7 @@ class Args():
         self.nll_save_path = self.dir_input+'nll/'
 
 
-        self.load = True # if load model, default lr is very low
+        self.load = False  # if load model, default lr is very low
         self.load_epoch = 500
         self.save = True
         
