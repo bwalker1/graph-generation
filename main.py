@@ -215,9 +215,9 @@ if __name__ == '__main__':
         # how many to generate
         list_length = 1000
         # desired Z value (if you're using conditonal
-        Z = [[1, 0]]*list_length if args.conditional else None
+        Z = torch.Tensor([[1, 0]]*list_length) if args.conditional else None
         # Generate a graph list
-        G = graph_gen(args, rnn,output,torch.Tensor(Z),args.max_prev_node,args.max_num_node,list_length)
+        G = graph_gen(args, rnn,output,Z,args.max_prev_node,args.max_num_node,list_length)
         # save the graphs
         save_graph_list(G, fns.fname_test2)
     
