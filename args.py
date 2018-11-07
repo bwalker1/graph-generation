@@ -59,10 +59,10 @@ class Args():
 
         ### network config
         ## GraphRNN
-        if 'small' in self.graph_type:
-            self.parameter_shrink = 2
-        else:
-            self.parameter_shrink = 1
+        #if 'small' in self.graph_type:
+        #    self.parameter_shrink = 2
+        #else:
+        #    self.parameter_shrink = 1
         self.hidden_size_rnn = int(128/self.parameter_shrink) # hidden size for main RNN
         self.hidden_size_rnn_output = 16 # hidden size for output RNN
         self.embedding_size_rnn = int(64/self.parameter_shrink) # the size for LSTM input
