@@ -83,7 +83,7 @@ class Args():
         self.epochs_log = 1
         self.epochs_save = 100
         
-        self.run_id = 'cgcond'
+        self.run_id = ''
 
         self.lr = 0.003
         self.milestones = [400, 1000]
