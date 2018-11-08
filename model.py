@@ -273,12 +273,13 @@ class LSTM_plain(nn.Module):
 
 # plain GRU model
 class GRU_plain(nn.Module):
-    def __init__(self, input_size, embedding_size, hidden_size, num_layers, graph_embedding_size=None, has_input=True, has_output=False, output_size=None):
+    def __init__(self, input_size, embedding_size, hidden_size, num_layers, graph_embedding_size=None, has_input=True, has_output=False, is_encoder=False, output_size=None):
         super(GRU_plain, self).__init__()
         self.num_layers = num_layers
         self.hidden_size = hidden_size
         self.has_input = has_input
         self.has_output = has_output
+        self.is_encoder = is_encoder
 
         if has_input:
             self.input = nn.Linear(input_size, embedding_size)
@@ -291,6 +292,13 @@ class GRU_plain(nn.Module):
                 nn.Linear(hidden_size, embedding_size),
                 nn.ReLU(),
                 nn.Linear(embedding_size, output_size)
+            )
+            
+        if self.is_encoder:
+            assert graph_embedding_size is not None
+            self.encode_net = nn.Sequential(
+                nn.Linear(hidden_size,graph_embedding_size),
+                nn.Softmax
             )
 
         self.relu = nn.ReLU()
@@ -341,7 +349,10 @@ class GRU_plain(nn.Module):
         if self.has_output:
             output_raw = self.output(output_raw)
         # return hidden state at each time step
-        return output_raw
+        if self.is_encoder:
+            return self.encode_net(self.hidden)
+        else:
+            return output_raw
 
 
 

@@ -201,7 +201,10 @@ if __name__ == '__main__':
 
     ### start training
     if args.train:
-        train(args, dataset_loader, rnn, output, Z_list)
+        if args.train_encoder:
+            train_encoder(args, dataset_train, rnn, Z_list)
+        else:
+            train(args, dataset_loader, rnn, output, Z_list)
 
     if args.make_graph_list:
         if not args.train:

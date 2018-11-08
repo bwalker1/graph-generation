@@ -716,6 +716,53 @@ def train(args, dataset_train, rnn, output, Z_list = None):
                 torch.save(output.state_dict(), fname)
         epoch += 1
     np.save(args.timing_save_path+fns.fname,time_all)
+    
+    
+    
+def train_encoder(args, dataset_train, rnn, Z_list):
+    # get the filenames that we'll need for saving
+    fns = filenames(args)
+    # check if load existing model
+    if args.load:
+
+        fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
+        rnn.load_state_dict(torch.load(fname,map_location='cpu'))
+        fname = args.model_save_path + fns.fname + 'output_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
+        output.load_state_dict(torch.load(fname,map_location='cpu'))
+
+        args.lr = 0.00001
+        epoch = args.load_epoch
+        print('model loaded!, lr: {}'.format(args.lr))
+    else:
+        epoch = 1
+
+    # initialize optimizer
+    optimizer_rnn = optim.Adam(list(rnn.parameters()), lr=args.lr)
+
+    scheduler_rnn = MultiStepLR(optimizer_rnn, milestones=args.milestones, gamma=args.lr_rate)
+
+    # start main loop
+    time_all = np.zeros(args.epochs)
+    while epoch<=args.epochs:
+        time_start = tm.time()
+        # train
+        train_rnn_encoder_epoch(epoch, args, rnn, dataset_train,
+                        optimizer_rnn,
+                        scheduler_rnn)
+        time_end = tm.time()
+        time_all[epoch - 1] = time_end - time_start
+        # test
+        # ** todo: do some sort of testing
+
+
+        # save model checkpoint
+        if args.save:
+            if epoch % args.epochs_save == 0:
+                fname = args.model_save_path + fns.fname + 'rnn_' + str(epoch) + '_encoder.dat'
+                torch.save(rnn.state_dict(), fname)
+        epoch += 1
+    np.save(args.timing_save_path+fns.fname,time_all)
+    
 
 
 ########### for graph completion task
@@ -763,3 +810,83 @@ def train_nll(args, dataset_train, dataset_test, rnn, output,graph_validate_len,
             f.write(str(nll_train)+','+str(nll_test)+'\n')
 
     print('NLL evaluation done')
+
+def train_rnn_encoder_epoch(epoch, args, rnn, data_loader,
+                    optimizer_rnn, scheduler_rnn):
+    # set up to work with or without cuda
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    rnn.train()
+    loss_sum = 0
+
+    for batch_idx, data in enumerate(data_loader):
+        rnn.zero_grad()
+        
+        x_unsorted = data['x'].float()
+        y_unsorted = data['y'].float()
+        
+
+        
+        y_len_unsorted = data['len']
+        y_len_max = max(y_len_unsorted)
+        x_unsorted = x_unsorted[:, 0:y_len_max, :]
+        y_unsorted = y_unsorted[:, 0:y_len_max, :]
+        # initialize lstm hidden state according to batch size
+        rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
+        # output.hidden = output.init_hidden(batch_size=x_unsorted.size(0)*x_unsorted.size(1))
+
+        # sort input
+        y_len,sort_index = torch.sort(y_len_unsorted,0,descending=True)
+        y_len = y_len.numpy().tolist()
+        x = torch.index_select(x_unsorted,0,sort_index)
+        y = torch.index_select(y_unsorted,0,sort_index)
+
+        # input, output for output rnn module
+        # a smart use of pytorch builtin function: pack variable--b1_l1,b2_l1,...,b1_l2,b2_l2,...
+        y_reshape = pack_padded_sequence(y,y_len,batch_first=True).data
+        # reverse y_reshape, so that their lengths are sorted, add dimension
+        idx = [i for i in range(y_reshape.size(0)-1, -1, -1)]
+        idx = torch.LongTensor(idx)
+        y_reshape = y_reshape.index_select(0, idx)
+        y_reshape = y_reshape.view(y_reshape.size(0),y_reshape.size(1),1)
+
+        output_x = torch.cat((torch.ones(y_reshape.size(0),1,1),y_reshape[:,0:-1,0:1]),dim=1)
+        output_y = y_reshape
+        # batch size for output module: sum(y_len)
+        output_y_len = []
+        output_y_len_bin = np.bincount(np.array(y_len))
+        for i in range(len(output_y_len_bin)-1,0,-1):
+            count_temp = np.sum(output_y_len_bin[i:]) # count how many y_len is above i
+            output_y_len.extend([min(i,y.size(2))]*count_temp) # put them in output_y_len; max value should not exceed y.size(2)
+        # pack into variable
+        x = Variable(x).to(device)
+        y = Variable(y).to(device)
+        output_x = Variable(output_x).to(device)
+        output_y = Variable(output_y).to(device)
+        # print(output_y_len)
+        # print('len',len(output_y_len))
+        # print('y',y.size())
+        # print('output_y',output_y.size())
+
+        # if using ground truth to train
+        Z_pred = rnn(x, pack=True, input_len=y_len)
+
+        
+        
+        # use cross entropy loss
+        loss = binary_cross_entropy_weight(Z_pred, Z)
+        loss.backward()
+        # update deterministic and lstm
+        optimizer_rnn.step()
+        scheduler_rnn.step()
+
+
+        if epoch % args.epochs_log==0 and batch_idx==0: # only output first batch's statistics
+            print('Epoch: {}/{}, train loss: {:.6f}, graph type: {}, num_layer: {}, hidden: {}'.format(
+                epoch, args.epochs,loss.item(), args.graph_type, args.num_layers, args.hidden_size_rnn))
+
+        # logging
+        if args.use_tensorboard:
+            log_value('loss_'+args.fname, loss.data[0], epoch*args.batch_ratio+batch_idx)
+        feature_dim = y.size(1)*y.size(2)
+        loss_sum += loss.item()*feature_dim
+    return loss_sum/(batch_idx+1)
