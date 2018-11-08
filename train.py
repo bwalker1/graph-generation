@@ -725,12 +725,10 @@ def train_encoder(args, dataset_train, rnn, Z_list):
     # check if load existing model
     if args.load:
 
-        fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
+        fname = args.model_save_path + fns.fname + 'rnn_' + str(epoch) + '_encoder.dat'
         rnn.load_state_dict(torch.load(fname,map_location='cpu'))
-        fname = args.model_save_path + fns.fname + 'output_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
-        output.load_state_dict(torch.load(fname,map_location='cpu'))
 
-        args.lr = 0.00001
+        args.lr = 0.0003
         epoch = args.load_epoch
         print('model loaded!, lr: {}'.format(args.lr))
     else:
