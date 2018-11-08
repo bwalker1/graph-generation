@@ -343,13 +343,12 @@ class GRU_plain(nn.Module):
         output_raw, self.hidden = self.rnn(input, self.hidden)
         if pack:
             output_raw = pad_packed_sequence(output_raw, batch_first=True)[0]
-        if self.has_output:
+        if self.is_encoder:
+            output_raw = self.encode_net(output_raw.mean(1))
+        elif self.has_output:
             output_raw = self.output(output_raw)
         # return hidden state at each time step
-        if self.is_encoder:
-            return self.encode_net(self.hidden[-1])
-        else:
-            return output_raw
+        return output_raw
 
 
 

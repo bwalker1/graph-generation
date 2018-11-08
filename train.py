@@ -822,6 +822,7 @@ def train_rnn_encoder_epoch(epoch, args, rnn, data_loader,
         rnn.zero_grad()
         
         x_unsorted = data['x'].float()
+
         y_unsorted = data['y'].float()
         
 
@@ -874,7 +875,6 @@ def train_rnn_encoder_epoch(epoch, args, rnn, data_loader,
         
         # use cross entropy loss
         Z = data['Z'].long().to(device)
-
         loss = nn.CrossEntropyLoss()(Z_pred,torch.max(Z,1)[1])
         loss.backward()
         # update deterministic and lstm
