@@ -873,7 +873,9 @@ def train_rnn_encoder_epoch(epoch, args, rnn, data_loader,
         
         
         # use cross entropy loss
-        loss = binary_cross_entropy_weight(Z_pred, Z)
+        Z = data['Z'].long().to(device)
+
+        loss = nn.CrossEntropyLoss()(Z_pred,torch.max(Z,1)[1])
         loss.backward()
         # update deterministic and lstm
         optimizer_rnn.step()
