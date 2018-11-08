@@ -79,7 +79,7 @@ def create(args):
     elif args.graph_type=='caveman_small_mixed':
         graphs = []
         for j in range(18, 19):
-            for k in range(1000):
+            for k in range(50):
                 G = nx.relaxed_caveman_graph(2,int(j),p=0.15)
                 G.graph['Z'] = np.array([1,0])
                 graphs.append(G)
@@ -91,7 +91,7 @@ def create(args):
 #                 graphs.append(G)
         for i in range(6,7):
             for j in range(6,7):
-                for k in range(1000):
+                for k in range(50):
                     G = nx.grid_2d_graph(i,j)
                     G.graph['Z'] = np.array([0,1])
                     graphs.append(G)

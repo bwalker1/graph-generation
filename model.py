@@ -296,7 +296,7 @@ class GRU_plain(nn.Module):
             
         if self.is_encoder:
             assert graph_embedding_size is not None
-            self.encode_net = nn.Linear(hidden_size,graph_embedding_size)
+            self.encode_net = nn.Linear(hidden_size,graph_embedding_size,bias=False)
 
         self.relu = nn.ReLU()
         # initialize
@@ -344,7 +344,8 @@ class GRU_plain(nn.Module):
         if pack:
             output_raw = pad_packed_sequence(output_raw, batch_first=True)[0]
         if self.is_encoder:
-            output_raw = self.encode_net(output_raw.mean(1))
+            #print(output_raw[:,-1,:].size())
+            output_raw = self.encode_net(output_raw[:,-1,:])
         elif self.has_output:
             output_raw = self.output(output_raw)
         # return hidden state at each time step

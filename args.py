@@ -85,7 +85,7 @@ class Args():
         
         self.run_id = ''
 
-        self.lr = 0.003
+        self.lr = 0.0005
         self.milestones = [400, 1000]
         self.lr_rate = 0.3
 
