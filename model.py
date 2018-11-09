@@ -296,7 +296,7 @@ class GRU_plain(nn.Module):
             
         if self.is_encoder:
             assert graph_embedding_size is not None
-            self.encode_net = nn.Linear(hidden_size,graph_embedding_size,bias=False)
+            self.encode_net = nn.Sequential(nn.Linear(hidden_size,hidden_size,bias=False),nn.ReLU(),nn.Linear(hidden_size,graph_embedding_size))
 
         self.relu = nn.ReLU()
         # initialize
