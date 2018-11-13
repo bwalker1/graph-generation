@@ -319,7 +319,7 @@ class GRU_plain(nn.Module):
                 m.weight.data = init.xavier_uniform_(m.weight.data, gain=nn.init.calculate_gain('relu'))
 
     def init_hidden(self, batch_size):
-        return Variable(torch.zeros(self.num_layers, batch_size, self.hidden_size)).to(device)
+        return Variable(torch.ones(self.num_layers, batch_size, self.hidden_size)).to(device)
 
     def forward(self, input_raw, Z=None, pack=False, input_len=None):
         if self.has_input:
