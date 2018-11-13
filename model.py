@@ -280,6 +280,7 @@ class GRU_plain(nn.Module):
         self.has_input = has_input
         self.has_output = has_output
         self.is_encoder = is_encoder
+        self.graph_embedding_size = graph_embedding_size
 
         if has_input:
             self.input = nn.Linear(input_size, embedding_size)
@@ -345,7 +346,8 @@ class GRU_plain(nn.Module):
             output_raw = pad_packed_sequence(output_raw, batch_first=True)[0]
         if self.is_encoder:
             #print(output_raw[:,-1,:].size())
-            output_raw = self.encode_net(output_raw[:,-1,:])
+            #output_raw = self.encode_net(output_raw[:,-1,:])
+            output_raw = output_raw[:,-1,0:self.graph_embedding_size]
         elif self.has_output:
             output_raw = self.output(output_raw)
         # return hidden state at each time step
