@@ -20,7 +20,7 @@ class Args():
         self.note = 'GraphRNN_RNN'
 
         ### Whether we are doing conditional generation
-        self.conditional = False
+        self.conditional = True
 
         ## for comparison, removing the BFS compoenent
         # self.note = 'GraphRNN_MLP_nobfs'
@@ -59,10 +59,10 @@ class Args():
 
         ### network config
         ## GraphRNN
-        if 'small' in self.graph_type:
-            self.parameter_shrink = 2
-        else:
-            self.parameter_shrink = 1
+        #if 'small' in self.graph_type:
+        #    self.parameter_shrink = 2
+        #else:
+        self.parameter_shrink = 1
         self.hidden_size_rnn = int(128/self.parameter_shrink) # hidden size for main RNN
         self.hidden_size_rnn_output = 16 # hidden size for output RNN
         self.embedding_size_rnn = int(64/self.parameter_shrink) # the size for LSTM input
@@ -83,9 +83,9 @@ class Args():
         self.epochs_log = 1
         self.epochs_save = 100
         
-        self.run_id = 'cgcond'
+        self.run_id = ''
 
-        self.lr = 0.003
+        self.lr = 0.0005
         self.milestones = [400, 1000]
         self.lr_rate = 0.3
 
@@ -121,6 +121,9 @@ class Args():
         # output graph list options
         #self.output_set_length=1000
         self.output_name="graph_list.dat"
+        
+        # whether we should train an encoder RNN on the given set
+        self.train_encoder = True
         
         
 class filenames():

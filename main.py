@@ -162,8 +162,9 @@ if __name__ == '__main__':
             dataset = Graph_sequence_sampler_pytorch(graphs_train, max_prev_node=args.max_prev_node, max_num_node=args.max_num_node, use_classes=args.conditional, iteration=args.max_prev_node_iter)
             if args.max_prev_node is None:
                 args.max_prev_node = dataset.max_prev_node
-        sample_strategy = torch.utils.data.sampler.WeightedRandomSampler([1.0 / len(dataset) for i in range(len(dataset))],
-                                                                         num_samples=args.batch_size*args.batch_ratio, replacement=True)
+        # sample_strategy = torch.utils.data.sampler.WeightedRandomSampler([1.0 / len(dataset) for i in range(len(dataset))],
+#                                                                           num_samples=args.batch_size*args.batch_ratio, replacement=True)
+        sample_strategy = torch.utils.data.sampler.SequentialSampler(dataset)
         dataset_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, num_workers=args.num_workers,
                                                    sampler=sample_strategy)
 
@@ -191,7 +192,7 @@ if __name__ == '__main__':
     elif 'GraphRNN_RNN' in args.note:
         rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
                         hidden_size=args.hidden_size_rnn, num_layers=args.num_layers, graph_embedding_size=graph_embedding_size, has_input=True,
-                        has_output=True, output_size=args.hidden_size_rnn_output).to(device)
+                        has_output=True, is_encoder=args.train_encoder, output_size=args.hidden_size_rnn_output).to(device)
         output = GRU_plain(input_size=1, embedding_size=args.embedding_size_rnn_output,
                            hidden_size=args.hidden_size_rnn_output, num_layers=args.num_layers, has_input=True,
                            has_output=True, output_size=1).to(device)
@@ -201,7 +202,10 @@ if __name__ == '__main__':
 
     ### start training
     if args.train:
-        train(args, dataset_loader, rnn, output, Z_list)
+        if args.train_encoder:
+            train_encoder(args, dataset_loader, rnn, Z_list)
+        else:
+            train(args, dataset_loader, rnn, output, Z_list)
 
     if args.make_graph_list:
         if not args.train:
