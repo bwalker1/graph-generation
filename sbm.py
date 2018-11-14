@@ -10,12 +10,21 @@ def generateRandomBlockMatrix(blockSize, n, cin = 5, cout = 0.5):
     # blockSize: the number of blocks(community) in the graph
     # probIntraCommunityRange: probability range of edges within the each community
     # probInterCommunityRange: probability range of edges across communities
-
-    probIntraCommunity = (cin/(n/blockSize - 1)) * np.diag(np.ones(blockSize))
-    probInterCommunity = (cout/((n/blockSize)*(blockSize-1))) * (1 - np.diag(np.ones(blockSize)))
-    P = probIntraCommunity + probInterCommunity
-    P = (P + np.transpose(P))/2 # make it symmetric
-    return P.tolist()
+    
+    #probIntraCommunity = (cin/(n/blockSize - 1)) * np.diag(np.ones(blockSize))
+    nnodes=n
+    ep=.02
+    avg_degree=8
+    ncoms=blockSize
+    #this formula assumes equal block sizes.  For fixed average degree,equal number of nodes per community, and ratio pout/pin=ep
+    pin = (nnodes * avg_degree / (2.0)) / ((nnodes / float(ncoms)) * (nnodes / float(ncoms) - 1) / 2.0 * float(ncoms) + ep * (ncoms * (ncoms - 1) / 2.0) * (np.power(nnodes / (ncoms * 1.0), 2.0)))
+    pout=ep*pin
+    prob_mat = np.identity(ncoms) * pin + (np.ones((ncoms, ncoms)) - np.identity(ncoms)) * pout
+    return prob_mat
+    #probInterCommunity = (cout/((n/blockSize)*(blockSize-1))) * (1 - np.diag(np.ones(blockSize)))
+    #P = probIntraCommunity + probInterCommunity
+    #P = (P + np.transpose(P))/2 # make it symmetric
+    #return P.tolist()
 
 
 def generateSingleSBM(block, P):
@@ -46,7 +55,6 @@ def generateSetOfSBM(blockSizes):
         g.graph['Z'] = np.array(z)
         G.append(g)
     return G
-
 
 if __name__ == '__main__':
     nGraphs = 5
