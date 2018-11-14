@@ -821,6 +821,10 @@ def train_rnn_encoder_epoch(epoch, args, rnn, data_loader,
         #rnn.encode_net.requires_grad=False
         
         x_unsorted = data['x'].float()
+        
+        #print(torch.sum(data['x'],dim=[1,2]))
+        #print(data['Z'])
+        #exit(1)
 
         y_unsorted = data['y'].float()
         
@@ -878,14 +882,19 @@ def train_rnn_encoder_epoch(epoch, args, rnn, data_loader,
         #print(Z)
         loss = nn.CrossEntropyLoss()(Z_pred,torch.max(Z,1)[1])
         loss.backward()
+        
+        # compute hard max accuracy
+        class_pred = torch.max(Z_pred,1)[1]
+        class_true = torch.max(Z,1)[1]
+        acc = (torch.sum(class_true==class_pred)).float().item()/len(data['x'])
         # update deterministic and lstm
         optimizer_rnn.step()
         scheduler_rnn.step()
 
 
         if epoch % args.epochs_log==0 and batch_idx==0: # only output first batch's statistics
-            print('Epoch: {}/{}, train loss: {:.6f}, graph type: {}, num_layer: {}, hidden: {}'.format(
-                epoch, args.epochs,loss.item(), args.graph_type, args.num_layers, args.hidden_size_rnn))
+            print('Epoch: {}/{}, train loss: {:.6f}, training accuracy: {:.6f}, graph type: {}, num_layer: {}, hidden: {}'.format(
+                epoch, args.epochs,loss.item(), acc, args.graph_type, args.num_layers, args.hidden_size_rnn))
 
         # logging
         if args.use_tensorboard:

@@ -78,23 +78,21 @@ def create(args):
         args.max_prev_node = 20
     elif args.graph_type=='caveman_small_mixed':
         graphs = []
-        for j in range(18, 19):
-            for k in range(50):
-                G = nx.relaxed_caveman_graph(2,int(j),p=0.15)
-                G.graph['Z'] = np.array([1,0])
-                graphs.append(G)
+        for k in range(50):
+            G = nx.relaxed_caveman_graph(2,int(18),p=0.15)
+            G.graph['Z'] = np.array([1,0])
+            graphs.append(G)
         # for j in range(6, 11):
 #             for k in range(20):
 #                 #G = caveman_special(3,j,p_edge=1)
 #                 G = nx.relaxed_caveman_graph(3,j,p=0.15)
 #                 G.graph['Z'] = np.array([1,0])
 #                 graphs.append(G)
-        for i in range(6,7):
-            for j in range(6,7):
-                for k in range(50):
-                    G = nx.grid_2d_graph(i,j)
-                    G.graph['Z'] = np.array([0,1])
-                    graphs.append(G)
+        for k in range(50):
+            #G = nx.grid_2d_graph(i,j)
+            G = nx.relaxed_caveman_graph(3,int(12),p=0.15)
+            G.graph['Z'] = np.array([0,1])
+            graphs.append(G)
         args.max_prev_node = 30
     elif args.graph_type=='caveman_small_single':
         # graphs = []
