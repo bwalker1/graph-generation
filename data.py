@@ -420,6 +420,7 @@ class Graph_sequence_sampler_pytorch(torch.utils.data.Dataset):
     def __len__(self):
         return len(self.adj_all)
     def __getitem__(self, idx):
+        #print(idx)
         #np.random.seed(123)
         # NOTE: despite the names x_batch, y_batch, this appears to only return a single sequence, not a batch
         adj_copy = self.adj_all[idx].copy()
@@ -441,8 +442,7 @@ class Graph_sequence_sampler_pytorch(torch.utils.data.Dataset):
         # for small graph the rest are zero padded
         y_batch[0:adj_encoded.shape[0], :] = adj_encoded
         x_batch[1:adj_encoded.shape[0] + 1, :] = adj_encoded
-
-        # TODO: grab Z from the Z_list, and stick it in the return dict
+        
         returndict = {'x': x_batch, 'y': y_batch, 'len': len_batch}
         
         if self.use_classes:

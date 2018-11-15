@@ -82,6 +82,10 @@ def create(args):
             G = nx.relaxed_caveman_graph(2,int(18),p=0.15)
             G.graph['Z'] = np.array([1,0])
             graphs.append(G)
+#         for k in range(50):
+#             G = nx.relaxed_caveman_graph(3,int(12),p=0.15)
+#             G.graph['Z'] = np.array([0,1])
+#             graphs.append(G)
         # for j in range(6, 11):
 #             for k in range(20):
 #                 #G = caveman_special(3,j,p_edge=1)
@@ -89,8 +93,10 @@ def create(args):
 #                 G.graph['Z'] = np.array([1,0])
 #                 graphs.append(G)
         for k in range(50):
-            #G = nx.grid_2d_graph(i,j)
-            G = nx.relaxed_caveman_graph(3,int(12),p=0.15)
+            i = 6;
+            j = 6;
+            G = nx.grid_2d_graph(i,j)
+            #G = nx.relaxed_caveman_graph(3,int(12),p=0.15)
             G.graph['Z'] = np.array([0,1])
             graphs.append(G)
         args.max_prev_node = 30
@@ -148,11 +154,11 @@ def create(args):
         args.max_prev_node = 90
 
     elif args.graph_type == 'sbm_large':
-        N = 100
+        N = 40
         graphs = generateSetOfSBM([[N // x]*x for x in [2,4]*500])
         
-        args.max_prev_node = 60
-        args.max_num_node = 100
+        args.max_prev_node = 30
+        args.max_num_node = 40
 
     elif 'barabasi_noise' in args.graph_type:
         graphs = []

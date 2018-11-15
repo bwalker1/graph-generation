@@ -330,6 +330,7 @@ class GRU_plain(nn.Module):
             input = input_raw
         if pack:
             input = pack_padded_sequence(input, input_len, batch_first=True)
+        batch_size = len(input_len)
         if Z is not None and self.use_Z:
             if input_len is None:
                 # need to provide input_len so we know batch size
@@ -339,9 +340,23 @@ class GRU_plain(nn.Module):
                 raise RuntimeError
             batch_size = len(input_len)
             # Run Z through the network and then reshape it accordingly
+            print('Using Z')
             self.hidden = self.hidden_net(Z).view(batch_size,self.num_layers,self.hidden_size).transpose(0,1).contiguous()
         
+        # test out rnn effects
+        hidden2 = self.hidden
+        batch_size = int(input.size()[0])
+        outputfirst, hidden3 = self.rnn(input[0:int(batch_size/2),:,:],self.hidden[:,0:int(batch_size/2),:])
+        outputsecond, hidden4 = self.rnn(input[int(batch_size/2):,:,:],self.hidden[:,int(batch_size/2):,:])
+        
+        #print(outputfirst[:,-1,-1])
+        #print(outputsecond[:,-1,-1])
+        
         output_raw, self.hidden = self.rnn(input, self.hidden)
+        #print(output_raw[:,-1,-1])
+        
+        assert (output_raw == torch.cat((outputfirst,outputsecond))).byte().all()
+        
         if pack:
             output_raw = pad_packed_sequence(output_raw, batch_first=True)[0]
         if self.is_encoder:
