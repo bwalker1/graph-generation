@@ -881,7 +881,7 @@ def test_rnn_encoder(args, rnn, data_loader):
         # compute hard max accuracy
         class_pred = torch.max(Z_pred,1)[1]
         class_true = torch.max(Z,1)[1]
-        acc = (torch.sum(class_true==class_pred)).float().item()/len(data['x'])
+        acc = torch.sum((class_true==class_pred).float()).item()/len(data['x'])
         # update deterministic and lstm
 
 
@@ -968,7 +968,7 @@ def train_rnn_encoder_epoch(epoch, args, rnn, data_loader,
         # compute hard max accuracy
         class_pred = torch.max(Z_pred,1)[1]
         class_true = torch.max(Z,1)[1]
-        acc = (torch.sum(class_true==class_pred)).float().item()/len(data['x'])
+        acc = (torch.sum(class_true==class_pred).float()).item()/len(data['x'])
         # update deterministic and lstm
         optimizer_rnn.step()
         scheduler_rnn.step()
