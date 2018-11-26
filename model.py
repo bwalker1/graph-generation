@@ -270,6 +270,37 @@ class LSTM_plain(nn.Module):
         # return hidden state at each time step
         return output_raw
 
+def split_pack_padded_sequence_by_timestep(packed_sequence):
+    #take a single packed padded sequence object and split it into the individual
+    # time steps ( elements ) of the sequnece collected across all batches.
+    out_pps=[]
+    cursum=0
+    for i,bs in enumerate(packed_sequence[1]):
+        bs=int(bs)
+        # curgroup=[ packed_sequence[0][i] for i in range(cursum,bs)]
+        curgroup=packed_sequence[0][cursum:cursum+bs]
+        #there is a reduction by 1D of the input when packing so we have to expand back
+        cpps=pack_padded_sequence(curgroup.view(bs,1,-1),batch_first=True,lengths=[1]*bs)
+        out_pps.append(cpps)
+        cursum+=bs
+    return out_pps
+
+def merge_pack_padded_sequences(indvid_pack_padded_seqs):
+    """Here we recombined the packpadded sequences from before\
+    We assume that this list was constructed from a single packed padded sequence
+    Thus each element should be ordered the same """
+    for i,pps in enumerate(indvid_pack_padded_seqs):
+        if i==0:
+            outtensor=pps[0].view(pps[1][0],1,-1)
+            lengths=[ 1 for _ in range(pps[1])]
+        else:
+            for j in range(pps[1]):
+                lengths[j]+=1
+
+            outtensor=torch.cat((outtensor,pps[0].view(pps[1][0],1,-1)),dim=1)
+
+    return pack_padded_sequence(outtensor,lengths=lengths,batch_first=True)
+
 
 # plain GRU model
 class GRU_plain(nn.Module):
@@ -281,6 +312,15 @@ class GRU_plain(nn.Module):
         self.has_output = has_output
         self.is_encoder = is_encoder
         self.graph_embedding_size = graph_embedding_size
+
+        # TODO: get this shaped right
+        if graph_embedding_size is not None:
+            self.use_Z = True
+            input_size+=graph_embedding_size #we tack on Z to each input sequence
+            self.hidden_net = nn.Linear(graph_embedding_size,self.num_layers*self.hidden_size)
+        else:
+            self.use_Z = False
+
 
         if has_input:
             self.input = nn.Linear(input_size, embedding_size)
@@ -303,12 +343,6 @@ class GRU_plain(nn.Module):
         # initialize
         self.hidden = None  # need initialize before forward run
         
-        # TODO: get this shaped right
-        if graph_embedding_size is not None:
-            self.use_Z = True
-            self.hidden_net = nn.Linear(graph_embedding_size,self.num_layers*self.hidden_size)
-        else:
-            self.use_Z = False
 
         for name, param in self.rnn.named_parameters():
             if 'bias' in name:
@@ -323,11 +357,16 @@ class GRU_plain(nn.Module):
         return Variable(torch.ones(self.num_layers, batch_size, self.hidden_size)).to(device)
 
     def forward(self, input_raw, Z=None, pack=False, input_len=None):
+
+
+
         if self.has_input:
             input = self.input(input_raw)
             input = self.relu(input)
         else:
             input = input_raw
+
+
         if pack:
             input = pack_padded_sequence(input, input_len, batch_first=True)
         batch_size = len(input_len)
@@ -344,19 +383,27 @@ class GRU_plain(nn.Module):
             self.hidden = self.hidden_net(Z).view(batch_size,self.num_layers,self.hidden_size).transpose(0,1).contiguous()
         
         # test out rnn effects
-        hidden2 = self.hidden
-        batch_size = int(input.size()[0])
-        outputfirst, hidden3 = self.rnn(input[0:int(batch_size/2),:,:],self.hidden[:,0:int(batch_size/2),:])
-        outputsecond, hidden4 = self.rnn(input[int(batch_size/2):,:,:],self.hidden[:,int(batch_size/2):,:])
+        # hidden2 = self.hidden
+        # batch_size = int(input.size()[0])
+        # outputfirst, hidden3 = self.rnn(input[0:int(batch_size/2),:,:],self.hidden[:,0:int(batch_size/2),:])
+        # outputsecond, hidden4 = self.rnn(input[int(batch_size/2):,:,:],self.hidden[:,int(batch_size/2):,:])
         
         #print(outputfirst[:,-1,-1])
         #print(outputsecond[:,-1,-1])
-        
+
+        # This is where we apply each seperately
+        # individ_packed_sequences=split_pack_padded_sequence_by_timestep(input)
+        # all_output=[]
+        # for individ_input in individ_packed_sequences:
+        #     output_ind,self.hidden = self.rnn(individ_input,self.hidden)
+        #     all_output.append(output_ind)
+        #
+        # output_raw=merge_pack_padded_sequences(all_output)
+
         output_raw, self.hidden = self.rnn(input, self.hidden)
         #print(output_raw[:,-1,-1])
         
-        assert (output_raw == torch.cat((outputfirst,outputsecond))).byte().all()
-        
+        # assert (output_raw == torch.cat((outputfirst,outputsecond))).byte().all()
         if pack:
             output_raw = pad_packed_sequence(output_raw, batch_first=True)[0]
         if self.is_encoder:
@@ -367,6 +414,7 @@ class GRU_plain(nn.Module):
             output_raw = self.output(output_raw)
         # return hidden state at each time step
         return output_raw
+
 
 
 

@@ -15,6 +15,19 @@ PRINT_TIME = False
 def degree_worker(G):
     return np.array(nx.degree_histogram(G))
 
+def modularity_spectrum_worker(G,n2keep=5):
+    spect_arr=nx.modularity_spectrum(G)
+    inds=np.argpartition(spect_arr, -1*n2keep)[-1*n2keep:]
+    return np.real(spect_arr[inds])
+
+def laplace_spectrum_worker(G,n2keep=5):
+    spect_arr=nx.laplacian_spectrum(G)
+    inds=np.argpartition(spect_arr, -1*n2keep)[-1*n2keep:]
+    return np.real(spect_arr[inds])
+
+# def betweewnness_worker(G):
+#     return np.array(nx.joi)
+
 def add_tensor(x,y):
     support_size = max(len(x), len(y))
     if len(x) < len(y):
@@ -22,6 +35,7 @@ def add_tensor(x,y):
     elif len(y) < len(x):
         y = np.hstack((y, [0.0] * (support_size - len(y))))
     return x+y
+
 
 def degree_stats(graph_ref_list, graph_pred_list, is_parallel=False):
     ''' Compute the distance between the degree distributions of two unordered sets of graphs.
@@ -49,11 +63,46 @@ def degree_stats(graph_ref_list, graph_pred_list, is_parallel=False):
         for i in range(len(graph_pred_list_remove_empty)):
             degree_temp = np.array(nx.degree_histogram(graph_pred_list_remove_empty[i]))
             sample_pred.append(degree_temp)
-    print(len(sample_ref),len(sample_pred))
     mmd_dist = mmd.compute_mmd(sample_ref, sample_pred, kernel=mmd.gaussian_emd)
     elapsed = datetime.now() - prev
     if PRINT_TIME:
         print('Time computing degree mmd: ', elapsed)
+    return mmd_dist
+
+def spectrum_stats(graph_ref_list, graph_pred_list, is_parallel=False,n2keep=5,use_laplace=False):
+    ''' Compute the distance between the degree distributions of two unordered sets of graphs.
+    Args:
+      graph_ref_list, graph_target_list: two lists of networkx graphs to be evaluated
+    '''
+    sample_ref = []
+    sample_pred = []
+    # in case an empty graph is generated
+    graph_pred_list_remove_empty = [G for G in graph_pred_list if not G.number_of_nodes() == 0]
+
+    prev = datetime.now()
+    if use_laplace:
+        spec_func=laplace_spectrum_worker
+    else:
+        spec_func=modularity_spectrum_worker
+    if is_parallel:
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            for mod_spec_hist in executor.map(spec_func, graph_ref_list):
+                sample_ref.append(mod_spec_hist)
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            for mod_spec_hist in executor.map(spec_func, graph_pred_list_remove_empty):
+                sample_pred.append(mod_spec_hist)
+
+    else:
+        for i in range(len(graph_ref_list)):
+            mod_spec_hist_tmp = spec_func(graph_ref_list[i],n2keep)
+            sample_ref.append(mod_spec_hist_tmp)
+        for i in range(len(graph_pred_list_remove_empty)):
+            mod_spec_hist_tmp = spec_func(graph_pred_list_remove_empty[i],n2keep)
+            sample_pred.append(mod_spec_hist_tmp)
+    mmd_dist = mmd.compute_mmd(sample_ref, sample_pred, kernel=mmd.gaussian_emd)
+    elapsed = datetime.now() - prev
+    if PRINT_TIME:
+        print('Time computing spectrum mmd: ', elapsed)
     return mmd_dist
 
 def clustering_worker(param):
@@ -224,10 +273,10 @@ def orbit_stats_all(graph_ref_list, graph_pred_list):
     mmd_dist = mmd.compute_mmd(total_counts_ref, total_counts_pred, kernel=mmd.gaussian,
             is_hist=False, sigma=30.0)
 
-    print('-------------------------')
-    print(np.sum(total_counts_ref, axis=0) / len(total_counts_ref))
-    print('...')
-    print(np.sum(total_counts_pred, axis=0) / len(total_counts_pred))
-    print('-------------------------')
+    # print('-------------------------')
+    # print(np.sum(total_counts_ref, axis=0) / len(total_counts_ref))
+    # print('...')
+    # print(np.sum(total_counts_pred, axis=0) / len(total_counts_pred))
+    # print('-------------------------')
     return mmd_dist
 

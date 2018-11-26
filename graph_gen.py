@@ -20,17 +20,11 @@ import pickle
 from tensorboard_logger import configure, log_value
 import scipy.misc
 import time as tm
-from utils import *
-from model import *
-from data import *
-from args import *
-import create_graphs
-from graph_gen import *
 
 # RNN is the graph-level RNN
 # output is the output RNN
 # Z is the embedding or a matrix of embeddings to generate multiple graphs
-def graph_gen(args, rnn,output,Z,max_prev_node,max_num_node,test_batch_size):
+def graph_gen(rnn,output,Z,max_prev_node,max_num_node,test_batch_size):
     # generate graphs
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     Z = Variable(Z).to(device)
@@ -38,7 +32,7 @@ def graph_gen(args, rnn,output,Z,max_prev_node,max_num_node,test_batch_size):
     x_step = Variable(torch.ones(test_batch_size,1,max_prev_node)).to(device)
     
     #
-    h = rnn(x_step,Z,input_len = [0,]*test_batch_size)
+    h = rnn(x_step,Z)
     for i in range(max_num_node):
         
         # output.hidden = h.permute(1,0,2)
