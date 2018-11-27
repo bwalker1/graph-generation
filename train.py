@@ -453,11 +453,11 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
 
             for i in range(x_unsorted.shape[1]):
                 if i == 0:
-                    Ztot = Z.view(32, 1, -1)
+                    Ztot = Z.view(Z.shape[0], 1, -1)
                 else:
-                    Ztot = torch.cat((Ztot, Z.view(32, 1, -1)), dim=1)
+                    Ztot = torch.cat((Ztot, Z.view(Z.shape[0], 1, -1)), dim=1)
             x_unsorted=torch.cat((x_unsorted,Ztot),dim=2)
-            y_unsorted=torch.cat((y_unsorted,Ztot),dim=2)
+            # y_unsorted=torch.cat((y_unsorted,Ztot),dim=2)
         else:
             zsize=0
 
