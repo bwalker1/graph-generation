@@ -380,7 +380,7 @@ class GRU_plain(nn.Module):
                 raise RuntimeError
             batch_size = len(input_len)
             # Run Z through the network and then reshape it accordingly
-            print('Using Z')
+            # print('Using Z')
             self.hidden = self.hidden_net(Z).view(batch_size,self.num_layers,self.hidden_size).transpose(0,1).contiguous()
         
         # test out rnn effects
@@ -402,12 +402,6 @@ class GRU_plain(nn.Module):
         # output_raw=merge_pack_padded_sequences(all_output)
 
         output_raw, self.hidden = self.rnn(input, self.hidden)
-        # if self.graph_embedding_size is not None:
-        #     #we strip the Z value from the output.
-        #     output_strip,lengths=pad_packed_sequence(output_raw,batch_first=True)
-        #     output_strip=output_strip[:,:,:-self.graph_embedding_size]
-        #     output_raw=pack_padded_sequence(output_strip,lengths=lengths,batch_first=True)
-        #print(output_raw[:,-1,-1])
         
         # assert (output_raw == torch.cat((outputfirst,outputsecond))).byte().all()
         if pack:
