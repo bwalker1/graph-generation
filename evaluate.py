@@ -68,7 +68,7 @@ def eval_list(real_graphs_filename, pred_graphs_filename, prefix, eval_every):
         if result_id not in pred_graphs_dict:
             pred_graphs_dict[result_id] = {}
         pred_graphs_dict[result_id][epochs] = fname
-    
+
     for result_id in real_graphs_dict.keys():
         for epochs in sorted(real_graphs_dict[result_id]):
             real_g_list = utils.load_graph_list(real_graphs_dict[result_id][epochs])
@@ -80,7 +80,7 @@ def eval_list(real_graphs_filename, pred_graphs_filename, prefix, eval_every):
             #dist = eval.stats.degree_stats(real_g_list, pred_g_list)
             dist = eval.stats.clustering_stats(real_g_list, pred_g_list)
             print('dist between real and pred (', result_id, ') at epoch ', epochs, ': ', dist)
-    
+
             #dist = eval.stats.degree_stats(real_g_list, perturbed_g_list)
             dist = eval.stats.clustering_stats(real_g_list, perturbed_g_list)
             print('dist between real and perturbed: ', dist)
@@ -153,6 +153,9 @@ def eval_graph_lists(graph_test, graphs):
     # graph_test = graph_test[int(0.8 * graph_test_len):] # test on a hold out test set
     mmd_degree = eval.stats.degree_stats(graph_test, graphs)
     mmd_clustering = eval.stats.clustering_stats(graph_test, graphs)
+    mmd_spectrum = eval.stats.spectrum_stats(graph_test,graphs)
+    # mmd_laplace_spectrum = eval.stats.spectrum_stats(graph_test,graphs,use_laplace=True)
+
     try:
         mmd_4orbits = eval.stats.orbit_stats_all(graph_test, graphs)
     except:
@@ -160,7 +163,7 @@ def eval_graph_lists(graph_test, graphs):
     # print('deg: ', mmd_degree)
     # print('clustering: ', mmd_clustering)
     # print('orbits: ', mmd_4orbits)
-    return mmd_degree,mmd_clustering,mmd_4orbits
+    return mmd_degree,mmd_clustering,mmd_spectrum,mmd_4orbits
 
 def eval_single_list(graphs, dir_input, dataset_name):
     ''' Evaluate a list of graphs by comparing with graphs in directory dir_input.
@@ -177,9 +180,9 @@ def eval_single_list(graphs, dir_input, dataset_name):
         mmd_4orbits = eval.stats.orbit_stats_all(graph_test, graphs)
     except:
         mmd_4orbits = -1
-    print('deg: ', mmd_degree)
-    print('clustering: ', mmd_clustering)
-    print('orbits: ', mmd_4orbits)
+    # print('deg: ', mmd_degree)
+    # print('clustering: ', mmd_clustering)
+    # print('orbits: ', mmd_4orbits)
 
 def evaluation_epoch(dir_input, fname_output, model_name, dataset_name, args, is_clean=True, epoch_start=1000,epoch_end=3001,epoch_step=100):
     with open(fname_output, 'w+') as f:
@@ -268,7 +271,7 @@ def evaluation_epoch(dir_input, fname_output, model_name, dataset_name, args, is
                             str(epoch)+','+
                             str(mmd_degree_validate)+','+
                             str(mmd_clustering_validate)+','+
-                            str(mmd_4orbits_validate)+','+ 
+                            str(mmd_4orbits_validate)+','+
                             str(mmd_degree)+','+
                             str(mmd_clustering)+','+
                             str(mmd_4orbits)+'\n')
@@ -424,7 +427,7 @@ def eval_list_fname(real_graph_filename, pred_graphs_filename, baselines,
         }
 
     out_files['train'].write('degree,clustering,orbits4\n')
-    
+
     line = 'metric,real,ours,perturbed'
     for bl in baselines:
         line += ',' + bl
@@ -452,7 +455,7 @@ def eval_list_fname(real_graph_filename, pred_graphs_filename, baselines,
 
     num_evals = len(pred_graphs_filename)
     if epoch_range is None:
-        epoch_range = [i * eval_every for i in range(num_evals)] 
+        epoch_range = [i * eval_every for i in range(num_evals)]
     for i in range(num_evals):
         real_g_list = utils.load_graph_list(real_graph_filename)
         #pred_g_list = utils.load_graph_list(pred_graphs_filename[i])
@@ -548,7 +551,7 @@ def eval_list_fname(real_graph_filename, pred_graphs_filename, baselines,
                 results['deg'][baseline] = dist_degree
                 results['clustering'][baseline] = dist_clustering
                 results['orbits4'][baseline] = dist_4orbits
-                print('Kron: deg=', dist_degree, ', clustering=', dist_clustering, 
+                print('Kron: deg=', dist_degree, ', clustering=', dist_clustering,
                         ', orbits4=', dist_4orbits)
 
         out_files['train'].write('\n')
@@ -588,7 +591,7 @@ def eval_performance(datadir, prefix=None, args=None, eval_every=200, out_file_p
         #              str(epoch) + '_pred_' + str(args.num_layers) + '_' + str(args.bptt) + '_' + str(args.bptt_len) + '.dat' for epoch in range(0,50001,eval_every)]
         # pred_graphs_filename = [datadir + args.graph_save_path + args.note + '_' + args.graph_type + '_' + \
         #          str(epoch) + '_real_' + str(args.num_layers) + '_' + str(args.bptt) + '_' + str(args.bptt_len) + '.dat' for epoch in range(0,50001,eval_every)]
-        
+
         real_graph_filename = datadir+args.graph_save_path + args.fname_test + '0.dat'
         # for proposed model
         end_epoch = 3001
@@ -606,7 +609,7 @@ def eval_performance(datadir, prefix=None, args=None, eval_every=200, out_file_p
         #         args.bptt_len) + '_' + str(args.gumbel) + '.dat' for epoch in range(10000, 50001, eval_every)]
 
         eval_list_fname(real_graph_filename, pred_graphs_filename, baselines,
-                        epoch_range=epoch_range, 
+                        epoch_range=epoch_range,
                         eval_every=eval_every,
                         out_file_prefix=out_file_prefix)
 
@@ -623,7 +626,7 @@ def process_kron(kron_dir):
         G_list.append(utils.snap_txt_output_to_nx(os.path.join(kron_dir, filename)))
 
     return G_list
- 
+
 
 if __name__ == '__main__':
     args = Args()
@@ -633,7 +636,7 @@ if __name__ == '__main__':
     feature_parser = parser.add_mutually_exclusive_group(required=False)
     feature_parser.add_argument('--export-real', dest='export', action='store_true')
     feature_parser.add_argument('--no-export-real', dest='export', action='store_false')
-    feature_parser.add_argument('--kron-dir', dest='kron_dir', 
+    feature_parser.add_argument('--kron-dir', dest='kron_dir',
             help='Directory where graphs generated by kronecker method is stored.')
 
     parser.add_argument('--testfile', dest='test_file',
@@ -644,7 +647,7 @@ if __name__ == '__main__':
                  'models on multiple datasets.')
     parser.add_argument('--graph-type', dest='graph_type',
             help='Type of graphs / dataset.')
-    
+
     parser.set_defaults(export=False, kron_dir='', test_file='',
                         dir_prefix='',
                         graph_type=args.graph_type)
@@ -707,7 +710,3 @@ if __name__ == '__main__':
             os.makedirs(dir_prefix+'eval_results')
         evaluation(args_evaluate,dir_input=dir_prefix+"graphs/", dir_output=dir_prefix+"eval_results/",
                    model_name_all=args_evaluate.model_name_all,dataset_name_all=args_evaluate.dataset_name_all,args=args,overwrite=True)
-
-
-
-

@@ -3,7 +3,7 @@ import torchvision as tv
 import torch.nn as nn
 from torch.autograd import Variable
 import matplotlib.pyplot as plt
-from random import shuffle
+from random import shuffle,sample
 
 import networkx as nx
 import pickle as pkl
@@ -157,27 +157,33 @@ def Graph_load(dataset = 'cora'):
 
 
 
-def bfs_seq(G, start_id):
+def bfs_seq(G, start_id=None):
     '''
     get a bfs node sequence
     :param G:
     :param start_id:
     :return:
     '''
-    dictionary = dict(nx.bfs_successors(G, start_id))
-    start = [start_id]
-    output = [start_id]
-    while len(start) > 0:
-        next = []
+    output = []
+    unseen = set(range(len(G)))
+    while len(output) < len(G):
+        # pick a random node we haven't seen yet
+        start_id = sample(unseen,1)[0]
+        dictionary = dict(nx.bfs_successors(G, start_id))
+        start = [start_id]
+        output += [start_id]
         while len(start) > 0:
-            current = start.pop(0)
-            neighbor = dictionary.get(current)
-            if neighbor is not None:
-                #### a wrong example, should not permute here!
-                # shuffle(neighbor)
-                next = next + neighbor
-        output = output + next
-        start = next
+            next = []
+            while len(start) > 0:
+                current = start.pop(0)
+                neighbor = dictionary.get(current)
+                if neighbor is not None:
+                    next = next + neighbor
+            output = output + next
+            start = next
+        unseen -= set(output)
+    #print(output)
+    #print(len(output))
     return output
 
 
@@ -248,9 +254,13 @@ def encode_adj_flexible(adj):
     for i in range(adj.shape[0]):
         input_end = i + 1
         adj_slice = adj[i, input_start:input_end]
+        #print("On the %dth node in the BFS, frontier size is %d"%(i,len(adj_slice)))
         adj_output.append(adj_slice)
         non_zero = np.nonzero(adj_slice)[0]
-        input_start = input_end-len(adj_slice)+np.amin(non_zero)
+        if len(non_zero)>0:
+            input_start = input_end-len(adj_slice)+np.amin(non_zero)
+        else:
+            input_start = i+1
 
     return adj_output
 
@@ -384,12 +394,18 @@ def test_encode_decode_adj_full():
 
 ########## use pytorch dataloader
 class Graph_sequence_sampler_pytorch(torch.utils.data.Dataset):
-    def __init__(self, G_list, max_num_node=None, max_prev_node=None, iteration=20000):
+    def __init__(self, G_list, max_num_node=None, max_prev_node=None, iteration=20000, use_classes = False):
+        self.use_classes = use_classes
+        
         self.adj_all = []
         self.len_all = []
+        if self.use_classes:
+            self.Z_all = []
         for G in G_list:
             self.adj_all.append(np.asarray(nx.to_numpy_matrix(G)))
             self.len_all.append(G.number_of_nodes())
+            if self.use_classes:
+                self.Z_all.append(G.graph['Z'])
         if max_num_node is None:
             self.n = max(self.len_all)
         else:
@@ -401,38 +417,43 @@ class Graph_sequence_sampler_pytorch(torch.utils.data.Dataset):
         else:
             self.max_prev_node = max_prev_node
 
-        # self.max_prev_node = max_prev_node
-
-        # # sort Graph in descending order
-        # len_batch_order = np.argsort(np.array(self.len_all))[::-1]
-        # self.len_all = [self.len_all[i] for i in len_batch_order]
-        # self.adj_all = [self.adj_all[i] for i in len_batch_order]
     def __len__(self):
         return len(self.adj_all)
     def __getitem__(self, idx):
+        #print(idx)
+        #np.random.seed(123)
+        # NOTE: despite the names x_batch, y_batch, this appears to only return a single sequence, not a batch
         adj_copy = self.adj_all[idx].copy()
         x_batch = np.zeros((self.n, self.max_prev_node))  # here zeros are padded for small graph
-        x_batch[0,:] = 1 # the first input token is all ones
+        x_batch[0, :] = 1  # the first input token is all ones
         y_batch = np.zeros((self.n, self.max_prev_node))  # here zeros are padded for small graph
         # generate input x, y pairs
         len_batch = adj_copy.shape[0]
-        x_idx = np.random.permutation(adj_copy.shape[0])
-        adj_copy = adj_copy[np.ix_(x_idx, x_idx)]
+        x_idx = np.random.permutation(adj_copy.shape[0])  # Randomly permute the order of the nodes of G, and adjust
+        adj_copy = adj_copy[np.ix_(x_idx, x_idx)]         # the adjacency matrix accordingly
         adj_copy_matrix = np.asmatrix(adj_copy)
-        G = nx.from_numpy_matrix(adj_copy_matrix)
+        G = nx.from_numpy_matrix(adj_copy_matrix)         # Create new permuted networkx graph
         # then do bfs in the permuted G
-        start_idx = np.random.randint(adj_copy.shape[0])
-        x_idx = np.array(bfs_seq(G, start_idx))
+        start_idx = np.random.randint(adj_copy.shape[0])  # pick random starting node
+        x_idx = np.array(bfs_seq(G, start_idx))           # Generate a bfs sequence
         adj_copy = adj_copy[np.ix_(x_idx, x_idx)]
         adj_encoded = encode_adj(adj_copy.copy(), max_prev_node=self.max_prev_node)
         # get x and y and adj
         # for small graph the rest are zero padded
         y_batch[0:adj_encoded.shape[0], :] = adj_encoded
         x_batch[1:adj_encoded.shape[0] + 1, :] = adj_encoded
-        return {'x':x_batch,'y':y_batch, 'len':len_batch}
+        
+        returndict = {'x': x_batch, 'y': y_batch, 'len': len_batch}
+        
+        if self.use_classes:
+            returndict['Z'] = torch.Tensor(self.Z_all[idx])
+            
+        return returndict
+
 
     def calc_max_prev_node(self, iter=20000,topk=10):
         max_prev_node = []
+        diameters = []
         for i in range(iter):
             if i % (iter / 5) == 0:
                 print('iter {} times'.format(i))
@@ -443,16 +464,26 @@ class Graph_sequence_sampler_pytorch(torch.utils.data.Dataset):
             adj_copy = adj_copy[np.ix_(x_idx, x_idx)]
             adj_copy_matrix = np.asmatrix(adj_copy)
             G = nx.from_numpy_matrix(adj_copy_matrix)
+            ##diameters.append(nx.diameter(G))
             # then do bfs in the permuted G
             start_idx = np.random.randint(adj_copy.shape[0])
             x_idx = np.array(bfs_seq(G, start_idx))
             adj_copy = adj_copy[np.ix_(x_idx, x_idx)]
             # encode adj
             adj_encoded = encode_adj_flexible(adj_copy.copy())
-            max_encoded_len = max([len(adj_encoded[i]) for i in range(len(adj_encoded))])
+            try:
+                max_encoded_len = max([len(adj_encoded[i]) for i in range(len(adj_encoded))])
+            except:
+                print(adj_copy)
+                raise RuntimeError
             max_prev_node.append(max_encoded_len)
         max_prev_node = sorted(max_prev_node)[-1*topk:]
+        ##diameters = sorted(diameters)[-1*topk:]
+        print(max_prev_node)
+        ##print(diameters)
         return max_prev_node
+        
+
 
 
 

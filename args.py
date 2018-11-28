@@ -2,6 +2,10 @@
 ### program configuration
 class Args():
     def __init__(self):
+        # control what main.py does
+        self.train = True
+        self.make_graph_list = False
+
         # whether we use tensorboard logging
         self.use_tensorboard = False
         ### if clean tensorboard
@@ -15,6 +19,9 @@ class Args():
         # The dependent Bernoulli sequence version of GraphRNN
         self.note = 'GraphRNN_RNN'
 
+        ### Whether we are doing conditional generation
+        self.conditional = True
+
         ## for comparison, removing the BFS compoenent
         # self.note = 'GraphRNN_MLP_nobfs'
         # self.note = 'GraphRNN_RNN_nobfs'
@@ -25,7 +32,7 @@ class Args():
         # self.graph_type = 'caveman_small'
         # self.graph_type = 'caveman_small_single'
         # self.graph_type = 'community4'
-        self.graph_type = 'grid'
+        # self.graph_type = 'grid'
         # self.graph_type = 'grid_small'
         # self.graph_type = 'ladder_small'
 
@@ -35,6 +42,10 @@ class Args():
         # self.graph_type = 'barabasi_small'
         # self.graph_type = 'citeseer'
         # self.graph_type = 'citeseer_small'
+
+        # self.graph_type = 'grid'
+        
+        self.graph_type = 'sbm_large'
 
         # self.graph_type = 'barabasi_noise'
         # self.noise = 10
@@ -46,10 +57,10 @@ class Args():
         self.max_num_node = None # max number of nodes in a graph
         self.max_prev_node = None # max previous node that looks back
 
-        ### network config
-        ## GraphRNN
+        ## network config
+        # GraphRNN
         if 'small' in self.graph_type:
-            self.parameter_shrink = 2
+           self.parameter_shrink = 2
         else:
             self.parameter_shrink = 1
         self.hidden_size_rnn = int(128/self.parameter_shrink) # hidden size for main RNN
@@ -60,25 +71,28 @@ class Args():
 
         self.batch_size = 32 # normal: 32, and the rest should be changed accordingly
         self.test_batch_size = 32
-        self.test_total_size = 10
+        self.test_total_size = 1    
         self.num_layers = 4
 
         ### training config
         self.num_workers = 4 # num workers to load data, default 4
         self.batch_ratio = 32 # how many batches of samples per epoch, default 32, e.g., 1 epoch = 32 batches
-        self.epochs = 100  # now one epoch means self.batch_ratio x batch_size
-        self.epochs_test_start = 100
+        self.epochs = 2000  # now one epoch means self.batch_ratio x batch_size
+        self.epochs_test_start = 10000
         self.epochs_test = 100
         self.epochs_log = 1
         self.epochs_save = 100
+        
+        self.run_id = ''
 
-        self.lr = 0.003
+        self.lr = 0.0005
         self.milestones = [400, 1000]
         self.lr_rate = 0.3
 
         self.sample_time = 2 # sample time in each time step, when validating
 
         ### output config
+        # self.dir_input = "/dfs/scratch0/jiaxuany0/"
         self.dir_input = "./"
         self.model_save_path = self.dir_input+'model_save/' # only for nll evaluation
         self.graph_save_path = self.dir_input+'graphs/'
@@ -88,9 +102,11 @@ class Args():
         self.nll_save_path = self.dir_input+'nll/'
 
 
-        self.load = False   # if load model, default lr is very low
-        self.load_epoch = 3000
+        self.load = False  # if load model, default lr is very low
+        self.load_epoch = 500
         self.save = True
+        
+        self.max_prev_node_iter = 20000
 
 
         ### baseline config
@@ -102,10 +118,21 @@ class Args():
         self.metric_baseline = 'clustering'
 
 
+        # output graph list options
+        #self.output_set_length=1000
+        self.output_name="graph_list.dat"
+        
+        # whether we should train an encoder RNN on the given set
+        self.train_encoder = False
+        
+        
+class filenames():
+    def __init__(self,args):
         ### filenames to save intemediate and final outputs
-        self.fname = self.note + '_' + self.graph_type + '_' + str(self.num_layers) + '_' + str(self.hidden_size_rnn) + '_'
-        self.fname_pred = self.note+'_'+self.graph_type+'_'+str(self.num_layers)+'_'+ str(self.hidden_size_rnn)+'_pred_'
-        self.fname_train = self.note+'_'+self.graph_type+'_'+str(self.num_layers)+'_'+ str(self.hidden_size_rnn)+'_train_'
-        self.fname_test = self.note + '_' + self.graph_type + '_' + str(self.num_layers) + '_' + str(self.hidden_size_rnn) + '_test_'
-        self.fname_baseline = self.graph_save_path + self.graph_type + self.generator_baseline+'_'+self.metric_baseline
+        self.fname = args.note + '_' + str(args.run_id) + '_' + args.graph_type + '_' + str(args.num_layers) + '_' + str(args.hidden_size_rnn) + '_'
+        self.fname_pred = args.note+'_'+ str(args.run_id) + '_'  +args.graph_type+'_'+str(args.num_layers)+'_'+ str(args.hidden_size_rnn)+'_pred_'
+        self.fname_train = args.note+'_' +str(args.run_id) + '_'  +args.graph_type+'_'+str(args.num_layers)+'_'+ str(args.hidden_size_rnn)+'_train_'
+        self.fname_test = args.note + '_' + str(args.run_id) + '_'  + args.graph_type + '_' + str(args.num_layers) + '_' + str(args.hidden_size_rnn) + '_test_'
+        self.fname_baseline = args.graph_save_path + str(args.run_id) + '_' +  args.graph_type + args.generator_baseline+'_'+args.metric_baseline
+        self.fname_test2 = args.graph_save_path + str(args.run_id) + '_' + args.graph_type + args.generator_baseline + '_' + args.output_name
 

@@ -103,14 +103,13 @@ def gumbel_sigmoid(logits, temperature):
 # print(x)
 # print(y)
 
-
 def sample_sigmoid(y, sample, thresh=0.5, sample_time=2):
     '''
         do sampling over unnormalized score
     :param y: input
     :param sample: Bool
     :param thresh: if not sample, the threshold
-    :param sample_time: how many times do we sample, if =1, do single sample
+    :param sampe_time: how many times do we sample, if =1, do single sample
     :return: sampled result
     '''
 
@@ -271,16 +270,57 @@ class LSTM_plain(nn.Module):
         # return hidden state at each time step
         return output_raw
 
+def split_pack_padded_sequence_by_timestep(packed_sequence):
+    #take a single packed padded sequence object and split it into the individual
+    # time steps ( elements ) of the sequnece collected across all batches.
+    out_pps=[]
+    cursum=0
+    for i,bs in enumerate(packed_sequence[1]):
+        bs=int(bs)
+        # curgroup=[ packed_sequence[0][i] for i in range(cursum,bs)]
+        curgroup=packed_sequence[0][cursum:cursum+bs]
+        #there is a reduction by 1D of the input when packing so we have to expand back
+        cpps=pack_padded_sequence(curgroup.view(bs,1,-1),batch_first=True,lengths=[1]*bs)
+        out_pps.append(cpps)
+        cursum+=bs
+    return out_pps
+
+def merge_pack_padded_sequences(indvid_pack_padded_seqs):
+    """Here we recombined the packpadded sequences from before\
+    We assume that this list was constructed from a single packed padded sequence
+    Thus each element should be ordered the same """
+    for i,pps in enumerate(indvid_pack_padded_seqs):
+        if i==0:
+            outtensor=pps[0].view(pps[1][0],1,-1)
+            lengths=[ 1 for _ in range(pps[1])]
+        else:
+            for j in range(pps[1]):
+                lengths[j]+=1
+
+            outtensor=torch.cat((outtensor,pps[0].view(pps[1][0],1,-1)),dim=1)
+
+    return pack_padded_sequence(outtensor,lengths=lengths,batch_first=True)
+
 
 # plain GRU model
 class GRU_plain(nn.Module):
-    def __init__(self, input_size, embedding_size, hidden_size, num_layers,
-                 has_input=True, has_output=False, output_size=None):
+    def __init__(self, input_size, embedding_size, hidden_size, num_layers, graph_embedding_size=None, has_input=True, has_output=False, is_encoder=False, output_size=None):
         super(GRU_plain, self).__init__()
         self.num_layers = num_layers
         self.hidden_size = hidden_size
         self.has_input = has_input
         self.has_output = has_output
+        self.is_encoder = is_encoder
+        self.graph_embedding_size = graph_embedding_size
+
+        # TODO: get this shaped right
+        if graph_embedding_size is not None:
+            self.use_Z = True
+            input_size+=graph_embedding_size #we tack on Z to each input sequence
+            self.hidden_net = nn.Linear(graph_embedding_size,self.num_layers*self.hidden_size)
+        else:
+            self.use_Z = False
+
 
         if has_input:
             self.input = nn.Linear(input_size, embedding_size)
@@ -288,16 +328,22 @@ class GRU_plain(nn.Module):
                               batch_first=True)
         else:
             self.rnn = nn.GRU(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=True)
+
         if has_output:
             self.output = nn.Sequential(
                 nn.Linear(hidden_size, embedding_size),
                 nn.ReLU(),
                 nn.Linear(embedding_size, output_size)
             )
+            
+        if self.is_encoder:
+            assert graph_embedding_size is not None
+            self.encode_net = nn.Sequential(nn.Linear(hidden_size,hidden_size,bias=False),nn.ReLU(),nn.Linear(hidden_size,graph_embedding_size))
 
         self.relu = nn.ReLU()
         # initialize
         self.hidden = None  # need initialize before forward run
+        
 
         for name, param in self.rnn.named_parameters():
             if 'bias' in name:
@@ -308,28 +354,67 @@ class GRU_plain(nn.Module):
             if isinstance(m, nn.Linear):
                 m.weight.data = init.xavier_uniform_(m.weight.data, gain=nn.init.calculate_gain('relu'))
 
-    def init_hidden(self, batch_size, init_values=None):
-        if init_values is None:
-            hidden_var = Variable(torch.zeros(self.num_layers, batch_size, self.hidden_size)).to(device)
-        else:
-            hidden_var = Variable(init_values).to(device)
-        return hidden_var
+    def init_hidden(self, batch_size):
+        return Variable(torch.ones(self.num_layers, batch_size, self.hidden_size)).to(device)
 
-    def forward(self, input_raw, pack=False, input_len=None):
+    def forward(self, input_raw, Z=None, pack=False, input_len=None):
+
+
+
         if self.has_input:
             input = self.input(input_raw)
             input = self.relu(input)
         else:
             input = input_raw
+
+
         if pack:
             input = pack_padded_sequence(input, input_len, batch_first=True)
+        batch_size = len(input_len)
+        if Z is not None and self.use_Z:
+            if input_len is None:
+                # need to provide input_len so we know batch size
+                raise ValueError
+            if self.use_Z == False:
+                # rnn was created without a graph embedding size and has no Z init network
+                raise RuntimeError
+            batch_size = len(input_len)
+            # Run Z through the network and then reshape it accordingly
+            # print('Using Z')
+            self.hidden = self.hidden_net(Z).view(batch_size,self.num_layers,self.hidden_size).transpose(0,1).contiguous()
+        
+        # test out rnn effects
+        # hidden2 = self.hidden
+        # batch_size = int(input.size()[0])
+        # outputfirst, hidden3 = self.rnn(input[0:int(batch_size/2),:,:],self.hidden[:,0:int(batch_size/2),:])
+        # outputsecond, hidden4 = self.rnn(input[int(batch_size/2):,:,:],self.hidden[:,int(batch_size/2):,:])
+        
+        #print(outputfirst[:,-1,-1])
+        #print(outputsecond[:,-1,-1])
+
+        # This is where we apply each seperately
+        # individ_packed_sequences=split_pack_padded_sequence_by_timestep(input)
+        # all_output=[]
+        # for individ_input in individ_packed_sequences:
+        #     output_ind,self.hidden = self.rnn(individ_input,self.hidden)
+        #     all_output.append(output_ind)
+        #
+        # output_raw=merge_pack_padded_sequences(all_output)
+
         output_raw, self.hidden = self.rnn(input, self.hidden)
+        
+        # assert (output_raw == torch.cat((outputfirst,outputsecond))).byte().all()
         if pack:
             output_raw = pad_packed_sequence(output_raw, batch_first=True)[0]
-        if self.has_output:
+        if self.is_encoder:
+            #print(output_raw[:,-1,:].size())
+            output_raw = self.encode_net(output_raw[:,-1,:])
+            #output_raw = output_raw[:,-1,0:self.graph_embedding_size]
+        elif self.has_output:
             output_raw = self.output(output_raw)
         # return hidden state at each time step
         return output_raw
+
 
 
 
@@ -375,11 +460,10 @@ class MLP_token_plain(nn.Module):
         t = self.token_output(h)
         return y,t
 
-
 # a deterministic linear output (update: add noise)
-class MLPVAEPlain(nn.Module):
+class MLP_VAE_plain(nn.Module):
     def __init__(self, h_size, embedding_size, y_size):
-        super(MLPVAEPlain, self).__init__()
+        super(MLP_VAE_plain, self).__init__()
         self.encode_11 = nn.Linear(h_size, embedding_size) # mu
         self.encode_12 = nn.Linear(h_size, embedding_size) # lsgms
 
@@ -405,11 +489,10 @@ class MLPVAEPlain(nn.Module):
         y = self.decode_2(y)
         return y, z_mu, z_lsgms
 
-
 # a deterministic linear output (update: add noise)
-class MLPVAEConditionalPlain(nn.Module):
+class MLP_VAE_conditional_plain(nn.Module):
     def __init__(self, h_size, embedding_size, y_size):
-        super(MLPVAEConditionalPlain, self).__init__()
+        super(MLP_VAE_conditional_plain, self).__init__()
         self.encode_11 = nn.Linear(h_size, embedding_size)  # mu
         self.encode_12 = nn.Linear(h_size, embedding_size)  # lsgms
 
@@ -1265,11 +1348,12 @@ class CNN_decoder_attention(nn.Module):
                 m.bias.data.zero_()
 
     def forward(self, x):
-        """
+        '''
+
         :param
         x: batch * channel * length
         :return:
-        """
+        '''
         # hop1
         x = self.deconv(x)
         x = self.bn(x)
@@ -1338,9 +1422,18 @@ class CNN_decoder_attention(nn.Module):
         return x_hop1, x_hop2, x_hop3, x_hop1_attention, x_hop2_attention, x_hop3_attention
 
 
-class GraphsageEncoder(nn.Module):
+
+
+
+
+#### test code ####
+# x = Variable(torch.randn(1, 256, 1)).to(device)
+# decoder = CNN_decoder(256, 16).to(device)
+# y = decoder(x)
+
+class Graphsage_Encoder(nn.Module):
     def __init__(self, feature_size, input_size, layer_num):
-        super(GraphsageEncoder, self).__init__()
+        super(Graphsage_Encoder, self).__init__()
 
         self.linear_projection = nn.Linear(feature_size, input_size)
 
@@ -1359,6 +1452,7 @@ class GraphsageEncoder(nn.Module):
         self.linear_0_0 = nn.Linear(input_size * (2 ** 0), input_size * (2 ** 1))
 
         self.linear = nn.Linear(input_size*(2+2+4+8), input_size*(16))
+
 
         self.bn_3_0 = nn.BatchNorm1d(self.input_size * (2 ** 1))
         self.bn_3_1 = nn.BatchNorm1d(self.input_size * (2 ** 2))
@@ -1381,14 +1475,17 @@ class GraphsageEncoder(nn.Module):
                 m.weight.data.fill_(1)
                 m.bias.data.zero_()
 
+
     def forward(self, nodes_list, nodes_count_list):
-        """
-        :param nodes_list: a list, each element n_i is a tensor for node's k-i hop neighbours
+        '''
+
+        :param nodes: a list, each element n_i is a tensor for node's k-i hop neighbours
                 (the first nodes_hop is the furthest neighbor)
                 where n_i = N * num_neighbours * features
-               nodes_count_list: a list, each element is a list that show how many neighbours belongs to the father node
+               nodes_count: a list, each element is a list that show how many neighbours belongs to the father node
         :return:
-        """
+        '''
+
 
         # 3-hop feature
         # nodes original features to representations
@@ -1462,6 +1559,7 @@ class GraphsageEncoder(nn.Module):
         nodes_features_hop_2 = torch.mean(nodes_features, 1, keepdim=True)
         # print(nodes_features_hop_2.size())
 
+
         # 1-hop feature
         # nodes original features to representations
         nodes_list[2] = Variable(nodes_list[2]).to(device)
@@ -1474,6 +1572,7 @@ class GraphsageEncoder(nn.Module):
         nodes_features_hop_1 = torch.mean(nodes_features, 1, keepdim=True)
         # print(nodes_features_hop_1.size())
 
+
         # own feature
         nodes_list[3] = Variable(nodes_list[3]).to(device)
         nodes_list[3] = self.linear_projection(nodes_list[3])
@@ -1481,6 +1580,8 @@ class GraphsageEncoder(nn.Module):
         nodes_features = self.bn_0_0(nodes_features.view(-1, nodes_features.size(2), nodes_features.size(1)))
         nodes_features_hop_0 = nodes_features.view(-1, nodes_features.size(2), nodes_features.size(1))
         # print(nodes_features_hop_0.size())
+
+
 
         # concatenate
         nodes_features = torch.cat((nodes_features_hop_0, nodes_features_hop_1, nodes_features_hop_2, nodes_features_hop_3),dim=2)
