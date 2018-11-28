@@ -444,11 +444,12 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
         output.zero_grad()
         x_unsorted = data['x'].float()
         y_unsorted = data['y'].float()
-        
+
 
         #here we add on the Z's to each of the input/outputs
         if use_Z:
             Z = data['Z']
+            zsize=Z.shape[1]
 
             for i in range(x_unsorted.shape[1]):
                 if i == 0:
@@ -457,7 +458,8 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
                     Ztot = torch.cat((Ztot, Z.view(Z.shape[0], 1, -1)), dim=1)
             x_unsorted=torch.cat((x_unsorted,Ztot),dim=2)
             # y_unsorted=torch.cat((y_unsorted,Ztot),dim=2)
-
+        else:
+            zsize=0
 
         y_len_unsorted = data['len']
         y_len_max = max(y_len_unsorted)
@@ -518,6 +520,7 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
         output.hidden = torch.cat((h.view(1,h.size(0),h.size(1)),hidden_null),dim=0) # num_layers, batch_size, hidden_size
         y_pred = output(output_x, pack=True, input_len=output_y_len)
         y_pred = F.sigmoid(y_pred)
+
         # clean
         y_pred = pack_padded_sequence(y_pred, output_y_len, batch_first=True)
         y_pred = pad_packed_sequence(y_pred, batch_first=True)[0]
@@ -525,16 +528,16 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
         output_y = pad_packed_sequence(output_y,batch_first=True)[0]
         # use cross entropy loss
 
+        if zsize==0:
+            zsize=y_pred.shape[2] #use full length here.
 
-
-        loss = binary_cross_entropy_weight(y_pred, output_y)
+        loss = binary_cross_entropy_weight(y_pred[:,:-zsize], output_y[:,:-zsize])
         loss.backward()
         # update deterministic and lstm
         optimizer_output.step()
         optimizer_rnn.step()
         scheduler_output.step()
         scheduler_rnn.step()
-
 
         if epoch % args.epochs_log==0 and batch_idx==0: # only output first batch's statistics
             print('Epoch: {}/{}, train loss: {:.6f}, graph type: {}, num_layer: {}, hidden: {}'.format(
