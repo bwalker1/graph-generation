@@ -45,7 +45,7 @@ class Args():
 
         # self.graph_type = 'grid'
         
-        self.graph_type = 'sbm_large'
+        self.graph_type = 'caveman_small_mixed'
 
         # self.graph_type = 'barabasi_noise'
         # self.noise = 10
@@ -106,7 +106,7 @@ class Args():
         self.load_epoch = 500
         self.save = True
         
-        self.max_prev_node_iter = 20000
+        self.max_prev_node_iter = 4000
 
 
         ### baseline config
@@ -123,7 +123,7 @@ class Args():
         self.output_name="graph_list.dat"
         
         # whether we should train an encoder RNN on the given set
-        self.train_encoder = False
+        self.train_encoder = True
         
         
 class filenames():
