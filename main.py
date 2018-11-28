@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
     # handle command line argument
     parser = argparse.ArgumentParser()
-    
+
     default_vars = vars(args_default)
     for k,v in default_vars.items():
         t = type(v)
@@ -30,17 +30,17 @@ if __name__ == '__main__':
             parser.set_defaults(**{k:v})
         else:
             parser.add_argument('--'+k,dest=k,default=v,type=t)
-            
-        
-    
+
+
+
     #parser.add_argument('--conditional', default=True)
     #parser.set_defaults(**vars(args_default))
     args = parser.parse_args()
-    
-    
-    
-    
-        
+
+
+
+
+
     if args.conditional:
         print("Using conditional input")
     else:
@@ -70,7 +70,7 @@ if __name__ == '__main__':
             if os.path.isdir("tensorboard"):
                 shutil.rmtree("tensorboard")
         configure("tensorboard/run"+time, flush_secs=5)
-    
+
     generate_graphs = True
     if generate_graphs:
         graphs = create_graphs.create(args)
@@ -78,7 +78,7 @@ if __name__ == '__main__':
         #draw_graph(graphs[-1],'grid')
         #plot_degree_distribution(graphs)
         #plt.show()
-        
+
         # split datasets
         #random.seed(123)
         shuffle(graphs)
@@ -86,9 +86,9 @@ if __name__ == '__main__':
         graphs_test = graphs[int(0.8 * graphs_len):]
         graphs_train = graphs[0:int(0.8*graphs_len)]
         graphs_validate = graphs[0:int(0.2*graphs_len)]
-        
-        
-        
+
+
+
         if args.conditional:
             Z_list = [G.graph['Z'] for G in graphs]
         else:
@@ -170,7 +170,7 @@ if __name__ == '__main__':
         sample_strategy_test = torch.utils.data.sampler.SequentialSampler(dataset_test)
         dataset_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, num_workers=args.num_workers,
                                                    sampler=sample_strategy)
-        dataset_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=args.test_batch_size, num_workers=args.num_workers,
+        dataset_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=11, num_workers=args.num_workers,
                                                    sampler=sample_strategy_test)
 
     ### model initialization
@@ -183,7 +183,7 @@ if __name__ == '__main__':
         graph_embedding_size = 2
     else:
         graph_embedding_size = None
-    
+
     if 'GraphRNN_VAE_conditional' in args.note:
         rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
                         hidden_size=args.hidden_size_rnn, num_layers=args.num_layers, has_input=True,
@@ -210,10 +210,10 @@ if __name__ == '__main__':
         train_encoder(args, dataset_loader, rnn, Z_list)
     elif args.train:
         train(args, dataset_loader, rnn, output, Z_list)
-            
     if True:
         if args.train_encoder:
             test_rnn_encoder(args, rnn, dataset_loader_test)
+
 
     if args.make_graph_list:
         if not args.train:
@@ -232,10 +232,9 @@ if __name__ == '__main__':
         G = graph_gen(args, rnn,output,Z,args.max_prev_node,args.max_num_node,list_length)
         # save the graphs
         save_graph_list(G, fns.fname_test2)
-    
+
     ### graph completion
     # train_graph_completion(args,dataset_loader,rnn,output)
 
     ### nll evaluation
     # train_nll(args, dataset_loader, dataset_loader, rnn, output, max_iter = 200, graph_validate_len=graph_validate_len,graph_test_len=graph_test_len)
-

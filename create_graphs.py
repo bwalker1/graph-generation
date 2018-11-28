@@ -81,6 +81,7 @@ def create(args):
         for k in range(50):
             G = nx.relaxed_caveman_graph(2,int(18),p=0.15)
             G.graph['Z'] = np.array([1,0])
+            G.graph['id'] = k
             graphs.append(G)
 #         for k in range(50):
 #             G = nx.relaxed_caveman_graph(3,int(12),p=0.15)
@@ -98,6 +99,7 @@ def create(args):
             G = nx.grid_2d_graph(i,j)
             #G = nx.relaxed_caveman_graph(3,int(12),p=0.15)
             G.graph['Z'] = np.array([0,1])
+            G.graph['id']=50+k
             graphs.append(G)
         args.max_prev_node = 30
     elif args.graph_type=='caveman_small_single':
@@ -156,7 +158,7 @@ def create(args):
     elif args.graph_type == 'sbm_large':
         N = 40
         graphs = generateSetOfSBM([[N // x]*x for x in [2,4]*500])
-        
+
         args.max_prev_node = 30
         args.max_num_node = 40
 
@@ -210,5 +212,3 @@ def create(args):
         args.max_prev_node = 15
 
     return graphs
-
-

@@ -437,16 +437,16 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
     rnn.train()
     output.train()
     loss_sum = 0
-    
+
     use_Z = rnn.use_Z
     for batch_idx, data in enumerate(data_loader):
         rnn.zero_grad()
         output.zero_grad()
         x_unsorted = data['x'].float()
         y_unsorted = data['y'].float()
-        
 
-        
+
+
         y_len_unsorted = data['len']
         y_len_max = max(y_len_unsorted)
         x_unsorted = x_unsorted[:, 0:y_len_max, :]
@@ -538,7 +538,7 @@ def test_rnn_epoch(epoch, args, rnn, output, test_batch_size=16, Z_list = None):
     #rnn.hidden = rnn.init_hidden(test_batch_size)
     rnn.eval()
     output.eval()
-    
+
     # initialize testing Z
     # TODO: make this vary based on input Z
     if Z_list is None:
@@ -565,10 +565,10 @@ def train_rnn_forward_epoch(epoch, args, rnn, output, data_loader):
         y_len_max = max(y_len_unsorted)
         x_unsorted = x_unsorted[:, 0:y_len_max, :]
         y_unsorted = y_unsorted[:, 0:y_len_max, :]
-        
+
 
         # output.hidden = output.init_hidden(batch_size=x_unsorted.size(0)*x_unsorted.size(1))
-        
+
         if rnn.use_Z:
             Z = data['Z'].float()
             Z = Variable(Z).to(device)
@@ -576,7 +576,7 @@ def train_rnn_forward_epoch(epoch, args, rnn, output, data_loader):
             # initialize lstm hidden state according to batch size
             rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
             Z = None
-        
+
         # sort input
         y_len,sort_index = torch.sort(y_len_unsorted,0,descending=True)
         y_len = y_len.numpy().tolist()
@@ -716,9 +716,9 @@ def train(args, dataset_train, rnn, output, Z_list = None):
                 torch.save(output.state_dict(), fname)
         epoch += 1
     np.save(args.timing_save_path+fns.fname,time_all)
-    
-    
-    
+
+
+
 def train_encoder(args, dataset_train, rnn, Z_list):
     # get the filenames that we'll need for saving
     fns = filenames(args)
@@ -760,7 +760,7 @@ def train_encoder(args, dataset_train, rnn, Z_list):
                 torch.save(rnn.state_dict(), fname)
         epoch += 1
     np.save(args.timing_save_path+fns.fname,time_all)
-    
+
 
 
 ########### for graph completion task
@@ -808,25 +808,33 @@ def train_nll(args, dataset_train, dataset_test, rnn, output,graph_validate_len,
             f.write(str(nll_train)+','+str(nll_test)+'\n')
 
     print('NLL evaluation done')
-    
+
 def test_rnn_encoder(args, rnn, data_loader):
     rnn.eval()
-    
+
     for batch_idx, data in enumerate(data_loader):
         rnn.zero_grad()
         #rnn.encode_net.requires_grad=False
-        
+
+        cutoff = 24
         x_unsorted = data['x'].float()
-        
-        print(torch.sum(data['x'],dim=[1,2]))
-        print(data['Z'])
+        x_unsorted = x_unsorted[0:cutoff,:,:]
+        #print(data['id'])
+        #print(x_unsorted[:,:,0])
+        #print(data['id'])
+        #print(torch.sum(data['x'],dim=[1,2]))
+        #print(data['Z'])
         #exit(1)
 
         y_unsorted = data['y'].float()
-        
+        y_unsorted = y_unsorted[0:cutoff,:,:]
 
-        
+        Z_unsorted = data['Z'].long()
+
+
         y_len_unsorted = data['len']
+
+        y_len_unsorted = y_len_unsorted[0:cutoff]
         y_len_max = max(y_len_unsorted)
         x_unsorted = x_unsorted[:, 0:y_len_max, :]
         y_unsorted = y_unsorted[:, 0:y_len_max, :]
@@ -835,10 +843,14 @@ def test_rnn_encoder(args, rnn, data_loader):
         # output.hidden = output.init_hidden(batch_size=x_unsorted.size(0)*x_unsorted.size(1))
 
         # sort input
+        #print("y_len_unsorted: ", y_len_unsorted)
         y_len,sort_index = torch.sort(y_len_unsorted,0,descending=True)
+        #print("sort_index: ",sort_index)
         y_len = y_len.numpy().tolist()
         x = torch.index_select(x_unsorted,0,sort_index)
         y = torch.index_select(y_unsorted,0,sort_index)
+        Z = torch.index_select(Z_unsorted,0,sort_index)
+        #print(torch.sum(x,dim=[1,2]))
 
         # input, output for output rnn module
         # a smart use of pytorch builtin function: pack variable--b1_l1,b2_l1,...,b1_l2,b2_l2,...
@@ -870,26 +882,31 @@ def test_rnn_encoder(args, rnn, data_loader):
         # if using ground truth to train
         Z_pred = rnn(x, pack=False, input_len=y_len)
 
-        
-        
+
+
         # use cross entropy loss
-        Z = data['Z'].long().to(device)
-        print(Z_pred)
-        print(Z)
+
+        #print(Z.size())
+        Z = Z[0:cutoff,:]
+        Z = Z.to(device)
+        #print(Z_pred)
+        #print(Z)
         loss = nn.CrossEntropyLoss()(Z_pred,torch.max(Z,1)[1])
-        
+
         # compute hard max accuracy
-        class_pred = torch.max(Z_pred,1)[1]
-        class_true = torch.max(Z,1)[1]
-        acc = torch.sum((class_true==class_pred).float()).item()/len(data['x'])
+        class_pred = torch.max(Z_pred,1)[1].long()
+        class_true = torch.max(Z,1)[1].long()
+        #print(class_pred)
+        #print(class_true)
+        acc = torch.sum((class_true==class_pred).float()).item()/x_unsorted.shape[0]
         # update deterministic and lstm
 
 
         if batch_idx==0: # only output first batch's statistics
-            print('Testing: train loss: {:.6f}, training accuracy: {:.6f}, graph type: {}, num_layer: {}, hidden: {}'.format(
+            print('Testing: test loss: {:.6f}, test accuracy: {:.6f}, graph type: {}, num_layer: {}, hidden: {}'.format(
                   loss.item(), acc, args.graph_type, args.num_layers, args.hidden_size_rnn))
             return
-    
+
 
 def train_rnn_encoder_epoch(epoch, args, rnn, data_loader,
                     optimizer_rnn, scheduler_rnn):
@@ -901,17 +918,18 @@ def train_rnn_encoder_epoch(epoch, args, rnn, data_loader,
     for batch_idx, data in enumerate(data_loader):
         rnn.zero_grad()
         #rnn.encode_net.requires_grad=False
-        
+
         x_unsorted = data['x'].float()
-        
+
         #print(torch.sum(data['x'],dim=[1,2]))
         #print(data['Z'])
         #exit(1)
 
         y_unsorted = data['y'].float()
-        
 
-        
+        Z_unsorted = data['Z'].long()
+
+
         y_len_unsorted = data['len']
         y_len_max = max(y_len_unsorted)
         x_unsorted = x_unsorted[:, 0:y_len_max, :]
@@ -925,6 +943,7 @@ def train_rnn_encoder_epoch(epoch, args, rnn, data_loader,
         y_len = y_len.numpy().tolist()
         x = torch.index_select(x_unsorted,0,sort_index)
         y = torch.index_select(y_unsorted,0,sort_index)
+        Z = torch.index_select(Z_unsorted,0,sort_index)
 
         # input, output for output rnn module
         # a smart use of pytorch builtin function: pack variable--b1_l1,b2_l1,...,b1_l2,b2_l2,...
@@ -956,15 +975,15 @@ def train_rnn_encoder_epoch(epoch, args, rnn, data_loader,
         # if using ground truth to train
         Z_pred = rnn(x, pack=False, input_len=y_len)
 
-        
-        
+
+
         # use cross entropy loss
-        Z = data['Z'].long().to(device)
+        Z=Variable(Z).to(device)
         #print(Z_pred)
         #print(Z)
         loss = nn.CrossEntropyLoss()(Z_pred,torch.max(Z,1)[1])
         loss.backward()
-        
+
         # compute hard max accuracy
         class_pred = torch.max(Z_pred,1)[1]
         class_true = torch.max(Z,1)[1]

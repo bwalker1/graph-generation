@@ -294,7 +294,7 @@ class GRU_plain(nn.Module):
                 nn.ReLU(),
                 nn.Linear(embedding_size, output_size)
             )
-            
+
         if self.is_encoder:
             assert graph_embedding_size is not None
             self.encode_net = nn.Sequential(nn.Linear(hidden_size,hidden_size,bias=False),nn.ReLU(),nn.Linear(hidden_size,graph_embedding_size))
@@ -302,7 +302,7 @@ class GRU_plain(nn.Module):
         self.relu = nn.ReLU()
         # initialize
         self.hidden = None  # need initialize before forward run
-        
+
         # TODO: get this shaped right
         if graph_embedding_size is not None:
             self.use_Z = True
@@ -342,21 +342,12 @@ class GRU_plain(nn.Module):
             # Run Z through the network and then reshape it accordingly
             print('Using Z')
             self.hidden = self.hidden_net(Z).view(batch_size,self.num_layers,self.hidden_size).transpose(0,1).contiguous()
-        
+
         # test out rnn effects
-        hidden2 = self.hidden
         batch_size = int(input.size()[0])
-        outputfirst, hidden3 = self.rnn(input[0:int(batch_size/2),:,:],self.hidden[:,0:int(batch_size/2),:])
-        outputsecond, hidden4 = self.rnn(input[int(batch_size/2):,:,:],self.hidden[:,int(batch_size/2):,:])
-        
-        #print(outputfirst[:,-1,-1])
-        #print(outputsecond[:,-1,-1])
-        
+
         output_raw, self.hidden = self.rnn(input, self.hidden)
-        #print(output_raw[:,-1,-1])
-        
-        assert (output_raw == torch.cat((outputfirst,outputsecond))).byte().all()
-        
+
         if pack:
             output_raw = pad_packed_sequence(output_raw, batch_first=True)[0]
         if self.is_encoder:
@@ -1542,7 +1533,3 @@ class Graphsage_Encoder(nn.Module):
         nodes_features = nodes_features.view(-1,nodes_features.size(2),nodes_features.size(1))
         # print(nodes_features.size())
         return(nodes_features)
-
-
-
-
