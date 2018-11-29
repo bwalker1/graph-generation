@@ -180,7 +180,7 @@ if __name__ == '__main__':
 
     # check whether we're using conditional input
     if args.conditional:
-        graph_embedding_size = 2
+        graph_embedding_size = 3
     else:
         graph_embedding_size = None
 

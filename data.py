@@ -426,7 +426,7 @@ class Graph_sequence_sampler_pytorch(torch.utils.data.Dataset):
         return len(self.adj_all)
     def __getitem__(self, idx):
         #print(idx)
-        np.random.seed(5)
+        #np.random.seed(5)
         # NOTE: despite the names x_batch, y_batch, this appears to only return a single sequence, not a batch
         adj_copy = self.adj_all[idx].copy()
         x_batch = np.zeros((self.n, self.max_prev_node))  # here zeros are padded for small graph

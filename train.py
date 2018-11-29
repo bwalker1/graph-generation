@@ -978,7 +978,8 @@ def train_rnn_encoder_epoch(epoch, args, rnn, data_loader,
 
 
         # use cross entropy loss
-        Z=Variable(Z).to(device)
+        #Z=Variable(Z).to(device)
+        Z=Z.to(device)
         #print(Z_pred)
         #print(Z)
         loss = nn.CrossEntropyLoss()(Z_pred,torch.max(Z,1)[1])
@@ -999,7 +1000,7 @@ def train_rnn_encoder_epoch(epoch, args, rnn, data_loader,
 
         # logging
         if args.use_tensorboard:
-            log_value('loss_'+args.fname, loss.data[0], epoch*args.batch_ratio+batch_idx)
+            log_value('loss_'+args.fname, loss.item(), epoch*args.batch_ratio+batch_idx)
         feature_dim = y.size(1)*y.size(2)
         loss_sum += loss.item()*feature_dim
     return loss_sum/(batch_idx+1)

@@ -76,29 +76,36 @@ def create(args):
                 G.graph['Z'] = np.array([0,1])
                 graphs.append(G)
         args.max_prev_node = 20
+    elif args.graph_type=="caveman_sbm_mixed":
+        graphs = []
+        for k in range(100):
+            G = nx.relaxed_caveman_graph(2,int(32),p=0.15)
+            G.graph['Z'] = np.array([1,0,])
+            G.graph['id'] = k
+            graphs.append(G)
+        #graphs += generateSetOfSBM([[64 // x]*x for x in [2]*500])
     elif args.graph_type=='caveman_small_mixed':
         graphs = []
         for k in range(50):
             G = nx.relaxed_caveman_graph(2,int(18),p=0.15)
-            G.graph['Z'] = np.array([1,0])
+            G.graph['Z'] = np.array([1,0,0])
             G.graph['id'] = k
             graphs.append(G)
 #         for k in range(50):
 #             G = nx.relaxed_caveman_graph(3,int(12),p=0.15)
 #             G.graph['Z'] = np.array([0,1])
 #             graphs.append(G)
-        # for j in range(6, 11):
-#             for k in range(20):
-#                 #G = caveman_special(3,j,p_edge=1)
-#                 G = nx.relaxed_caveman_graph(3,j,p=0.15)
-#                 G.graph['Z'] = np.array([1,0])
-#                 graphs.append(G)
+        for k in range(50):
+            G = nx.relaxed_caveman_graph(3,int(12),p=0.15)
+            G.graph['Z'] = np.array([0,1,0])
+            G.graph['id'] = k
+            graphs.append(G)
         for k in range(50):
             i = 6;
             j = 6;
             G = nx.grid_2d_graph(i,j)
             #G = nx.relaxed_caveman_graph(3,int(12),p=0.15)
-            G.graph['Z'] = np.array([0,1])
+            G.graph['Z'] = np.array([0,0,1])
             G.graph['id']=50+k
             graphs.append(G)
         args.max_prev_node = 30
