@@ -579,7 +579,7 @@ def train_rnn_forward_epoch(epoch, args, rnn, output, data_loader):
         if rnn.use_Z:
             Z_unsorted = data['Z'].long()
             Z = torch.index_select(Z_unsorted, 0, sort_index)
-            Z=Variable(Z)
+            Z=Variable(Z).todevice()
         else:
             # initialize lstm hidden state according to batch size
             rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
