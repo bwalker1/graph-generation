@@ -344,7 +344,7 @@ class GRU_plain(nn.Module):
             self.hidden = self.hidden_net(Z).view(batch_size,self.num_layers,self.hidden_size).transpose(0,1).contiguous()
 
         # test out rnn effects
-        batch_size = int(input.size()[0])
+        # batch_size = int(input.size()[0])
 
         output_raw, self.hidden = self.rnn(input, self.hidden)
 
