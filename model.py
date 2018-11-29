@@ -316,7 +316,7 @@ class GRU_plain(nn.Module):
         # TODO: get this shaped right
         if graph_embedding_size is not None:
             self.use_Z = True
-            input_size+=graph_embedding_size #we tack on Z to each input sequence
+            # input_size+=graph_embedding_size #we tack on Z to each input sequence
             self.hidden_net = nn.Linear(graph_embedding_size,self.num_layers*self.hidden_size)
         else:
             self.use_Z = False

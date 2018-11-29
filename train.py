@@ -437,7 +437,7 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
     rnn.train()
     output.train()
     loss_sum = 0
-    
+
     use_Z = rnn.use_Z
     for batch_idx, data in enumerate(data_loader):
         rnn.zero_grad()
@@ -447,19 +447,19 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
 
 
         #here we add on the Z's to each of the input/outputs
-        if use_Z:
-            Z = data['Z']
-            zsize=Z.shape[1]
-
-            for i in range(x_unsorted.shape[1]):
-                if i == 0:
-                    Ztot = Z.view(Z.shape[0], 1, -1)
-                else:
-                    Ztot = torch.cat((Ztot, Z.view(Z.shape[0], 1, -1)), dim=1)
-            x_unsorted=torch.cat((x_unsorted,Ztot),dim=2)
-            # y_unsorted=torch.cat((y_unsorted,Ztot),dim=2)
-        else:
-            zsize=0
+        # if use_Z:
+        #     Z = data['Z']
+        #     zsize=Z.shape[1]
+        #
+        #     for i in range(x_unsorted.shape[1]):
+        #         if i == 0:
+        #             Ztot = Z.view(Z.shape[0], 1, -1)
+        #         else:
+        #             Ztot = torch.cat((Ztot, Z.view(Z.shape[0], 1, -1)), dim=1)
+        #     x_unsorted=torch.cat((x_unsorted,Ztot),dim=2)
+        #     # y_unsorted=torch.cat((y_unsorted,Ztot),dim=2)
+        # else:
+        #     zsize=0
 
         y_len_unsorted = data['len']
         y_len_max = max(y_len_unsorted)
@@ -474,6 +474,14 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
         y_len = y_len.numpy().tolist()
         x = torch.index_select(x_unsorted,0,sort_index)
         y = torch.index_select(y_unsorted,0,sort_index)
+        if rnn.use_Z:
+            Z_unsorted = data['Z'].long()
+            Z = torch.index_select(Z_unsorted, 0, sort_index)
+            Z=Variable(Z).todevice()
+        else:
+            # initialize lstm hidden state according to batch size
+            rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
+            Z = None
 
         # input, output for output rnn module
         # a smart use of pytorch builtin function: pack variable--b1_l1,b2_l1,...,b1_l2,b2_l2,...
@@ -526,8 +534,6 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
         output_y = pack_padded_sequence(output_y,output_y_len,batch_first=True)
         output_y = pad_packed_sequence(output_y,batch_first=True)[0]
         # use cross entropy loss
-
-
         loss = binary_cross_entropy_weight(y_pred, output_y)
         loss.backward()
         # update deterministic and lstm
@@ -554,7 +560,7 @@ def test_rnn_epoch(epoch, args, rnn, output, test_batch_size=16, Z_list = None):
     #rnn.hidden = rnn.init_hidden(test_batch_size)
     rnn.eval()
     output.eval()
-    
+
     # initialize testing Z
     # TODO: make this vary based on input Z
     if Z_list is None:
@@ -733,9 +739,9 @@ def train(args, dataset_train, rnn, output, Z_list = None):
                 torch.save(output.state_dict(), fname)
         epoch += 1
     np.save(args.timing_save_path+fns.fname,time_all)
-    
-    
-    
+
+
+
 def train_encoder(args, dataset_train, rnn, Z_list):
     # get the filenames that we'll need for saving
     fns = filenames(args)
@@ -777,7 +783,7 @@ def train_encoder(args, dataset_train, rnn, Z_list):
                 torch.save(rnn.state_dict(), fname)
         epoch += 1
     np.save(args.timing_save_path+fns.fname,time_all)
-    
+
 
 
 ########### for graph completion task
