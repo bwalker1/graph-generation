@@ -340,7 +340,7 @@ class GRU_plain(nn.Module):
                 raise RuntimeError
             batch_size = len(input_len)
             # Run Z through the network and then reshape it accordingly
-            print('Using Z')
+            # print('Using Z')
             self.hidden = self.hidden_net(Z).view(batch_size,self.num_layers,self.hidden_size).transpose(0,1).contiguous()
 
         # test out rnn effects
