@@ -569,20 +569,21 @@ def train_rnn_forward_epoch(epoch, args, rnn, output, data_loader):
 
         # output.hidden = output.init_hidden(batch_size=x_unsorted.size(0)*x_unsorted.size(1))
 
-        if rnn.use_Z:
-            Z = data['Z'].float()
-            Z = Variable(Z).to(device)
-        else:
-            # initialize lstm hidden state according to batch size
-            rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
-            Z = None
+
 
         # sort input
         y_len,sort_index = torch.sort(y_len_unsorted,0,descending=True)
         y_len = y_len.numpy().tolist()
         x = torch.index_select(x_unsorted,0,sort_index)
         y = torch.index_select(y_unsorted,0,sort_index)
-
+        if rnn.use_Z:
+            Z_unsorted = data['Z'].long()
+            Z = torch.index_select(Z_unsorted, 0, sort_index)
+            Z=Variable(Z)
+        else:
+            # initialize lstm hidden state according to batch size
+            rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
+            Z = None
         # input, output for output rnn module
         # a smart use of pytorch builtin function: pack variable--b1_l1,b2_l1,...,b1_l2,b2_l2,...
         y_reshape = pack_padded_sequence(y,y_len,batch_first=True).data
@@ -611,7 +612,7 @@ def train_rnn_forward_epoch(epoch, args, rnn, output, data_loader):
         # print('output_y',output_y.size())
 
         # if using ground truth to train
-        print(Z)
+        # print(Z)
         h = rnn(x, Z, pack=True, input_len=y_len)
         h = pack_padded_sequence(h,y_len,batch_first=True).data # get packed hidden vector
         # reverse h
