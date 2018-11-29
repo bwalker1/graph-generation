@@ -62,7 +62,7 @@ class Args():
         #if 'small' in self.graph_type:
         #    self.parameter_shrink = 2
         #else:
-        self.parameter_shrink = 4
+        self.parameter_shrink = 1
         self.hidden_size_rnn = int(128/self.parameter_shrink) # hidden size for main RNN
         self.hidden_size_rnn_output = 16 # hidden size for output RNN
         self.embedding_size_rnn = int(64/self.parameter_shrink) # the size for LSTM input
@@ -72,7 +72,7 @@ class Args():
         self.batch_size = 32 # normal: 32, and the rest should be changed accordingly
         self.test_batch_size = 32
         self.test_total_size = 1    
-        self.num_layers = 2
+        self.num_layers = 4
 
         ### training config
         self.num_workers = 4 # num workers to load data, default 4
