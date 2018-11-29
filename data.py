@@ -410,7 +410,7 @@ class Graph_sequence_sampler_pytorch(torch.utils.data.Dataset):
             self.len_all.append(G.number_of_nodes())
             if self.use_classes:
                 self.Z_all.append(G.graph['Z'])
-                self.id_all.append(G.graph['id'])
+                # self.id_all.append(G.graph['id'])
         if max_num_node is None:
             self.n = max(self.len_all)
         else:

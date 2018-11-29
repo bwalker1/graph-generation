@@ -123,7 +123,7 @@ class Args():
         self.output_name="graph_list.dat"
         
         # whether we should train an encoder RNN on the given set
-        self.train_encoder = True
+        self.train_encoder = False
         
         
 class filenames():
