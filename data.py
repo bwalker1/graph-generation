@@ -457,7 +457,7 @@ class Graph_sequence_sampler_pytorch(torch.utils.data.Dataset):
             returndict['Z'] = torch.Tensor(self.Z_all[idx])
             #print(idx)
             #print(torch.Tensor([self.id_all[idx]]).size())
-            returndict['id'] = torch.Tensor([self.id_all[idx]])
+            # returndict['id'] = torch.Tensor([self.id_all[idx]])
 
         return returndict
 
