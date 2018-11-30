@@ -330,7 +330,6 @@ class GRU_plain(nn.Module):
             input = input_raw
         if pack:
             input = pack_padded_sequence(input, input_len, batch_first=True)
-        batch_size = len(input_len)
         if Z is not None and self.use_Z:
             if input_len is None:
                 # need to provide input_len so we know batch size
@@ -338,9 +337,9 @@ class GRU_plain(nn.Module):
             if self.use_Z == False:
                 # rnn was created without a graph embedding size and has no Z init network
                 raise RuntimeError
-            batch_size = len(input_len)
+            batch_size = int(input_raw.size()[0])
             # Run Z through the network and then reshape it accordingly
-            print('Using Z')
+            # print('Using Z')
             self.hidden = self.hidden_net(Z).view(batch_size,self.num_layers,self.hidden_size).transpose(0,1).contiguous()
 
         # test out rnn effects
