@@ -461,6 +461,14 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
         x = torch.index_select(x_unsorted,0,sort_index)
         y = torch.index_select(y_unsorted,0,sort_index)
 
+        if use_Z:
+            Z_unsorted = data['Z'].long()
+            Z = torch.index_select(Z_unsorted,0,sort_index)
+            Z = Variable(Z).to(device)
+        else:
+            rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
+            Z = None
+
         # input, output for output rnn module
         # a smart use of pytorch builtin function: pack variable--b1_l1,b2_l1,...,b1_l2,b2_l2,...
         y_reshape = pack_padded_sequence(y,y_len,batch_first=True).data
@@ -488,12 +496,7 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
         # print('y',y.size())
         # print('output_y',output_y.size())
 
-        if use_Z:
-            Z = data['Z'].float()
-            Z = Variable(Z).to(device)
-        else:
-            rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
-            Z = None
+
 
         # if using ground truth to train
         h = rnn(x, Z, pack=True, input_len=y_len)
