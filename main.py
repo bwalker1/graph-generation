@@ -227,11 +227,20 @@ if __name__ == '__main__':
         # how many to generate
         list_length = 1000
         # desired Z value (if you're using conditonal
-        Z = torch.Tensor([[1, 0]]*list_length) if args.conditional else None
-        # Generate a graph list
-        G = graph_gen(args, rnn,output,Z,args.max_prev_node,args.max_num_node,list_length)
-        # save the graphs
-        save_graph_list(G, fns.fname_test2)
+        if args.conditional:
+            for i, Z in enumerate([[1, 0], [0, 1]]):
+                Z = torch.Tensor(Z)
+                # Generate a graph list
+                G = graph_gen(args, rnn, output, Z, args.max_prev_node, args.max_num_node, list_length)
+                # save the graphs
+
+                save_graph_list(G, fns.fname_test2 + "_{:d}".format(i))
+        else:
+            Z = None
+            # Generate a graph list
+            G = graph_gen(args, rnn, output, Z, args.max_prev_node, args.max_num_node, list_length)
+            # save the graphs
+            save_graph_list(G, fns.fname_test2)
 
     ### graph completion
     # train_graph_completion(args,dataset_loader,rnn,output)
