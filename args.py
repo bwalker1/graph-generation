@@ -44,6 +44,7 @@ class Args():
         # self.graph_type = 'citeseer_small'
 
         # self.graph_type = 'grid'
+        
         self.graph_type = 'caveman_small_mixed'
 
         # self.graph_type = 'barabasi_noise'
@@ -72,7 +73,7 @@ class Args():
         self.batch_size = 16 # normal: 32, and the rest should be changed accordingly
         self.test_batch_size = 32
         self.test_total_size = 1    
-        self.num_layers = 4
+        self.num_layers = 2
 
         ### training config
         self.num_workers = 4 # num workers to load data, default 4
@@ -82,6 +83,7 @@ class Args():
         self.epochs_test = 100
         self.epochs_log = 1
         self.epochs_save = 100
+        
         self.run_id = ''
 
         self.lr = 0.0005
@@ -104,6 +106,7 @@ class Args():
         self.load = False  # if load model, default lr is very low
         self.load_epoch = 500
         self.save = True
+        
         self.max_prev_node_iter = 4000
 
 
@@ -119,8 +122,11 @@ class Args():
         # output graph list options
         #self.output_set_length=1000
         self.output_name="graph_list.dat"
+        
         # whether we should train an encoder RNN on the given set
         self.train_encoder = False
+        
+        
 class filenames():
     def __init__(self,args):
         ### filenames to save intemediate and final outputs
