@@ -11,11 +11,16 @@ def generateRandomBlockMatrix(ncoms, nnodes, avg_degree=8, ep = 0.05):
     # probIntraCommunityRange: probability range of edges within the each community
     # probInterCommunityRange: probability range of edges across communities
 
-    probIntraCommunity = (cin/(n/blockSize - 1)) * np.diag(np.ones(blockSize))
-    probInterCommunity = (cout/((n/blockSize)*(blockSize-1))) * (1 - np.diag(np.ones(blockSize)))
-    P = probIntraCommunity + probInterCommunity
-    P = (P + np.transpose(P))/2 # make it symmetric
-    return P.tolist()
+    pin = (nnodes * avg_degree / (2.0)) / ((nnodes / float(ncoms)) * (nnodes / float(ncoms) - 1) / 2.0 * float(ncoms) + ep * (ncoms * (ncoms - 1) / 2.0) * (np.power(nnodes / (ncoms * 1.0),2.0)))
+    pout = ep * pin
+    prob_mat = np.identity(ncoms) * pin + (np.ones((ncoms, ncoms)) - np.identity(ncoms)) * pout
+    return prob_mat
+
+    # probIntraCommunity = (cin/(n/blockSize - 1)) * np.diag(np.ones(blockSize))
+    # probInterCommunity = (cout/((n/blockSize)*(blockSize-1))) * (1 - np.diag(np.ones(blockSize)))
+    # P = probIntraCommunity + probInterCommunity
+    # P = (P + np.transpose(P))/2 # make it symmetric
+    # return P.tolist()
 
 
 def generateSingleSBM(block, P):
