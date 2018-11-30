@@ -170,7 +170,7 @@ if __name__ == '__main__':
         sample_strategy_test = torch.utils.data.sampler.SequentialSampler(dataset_test)
         dataset_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, num_workers=args.num_workers,
                                                    sampler=sample_strategy)
-        dataset_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=args.test_batch_size, num_workers=args.num_workers,
+        dataset_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=11, num_workers=args.num_workers,
                                                    sampler=sample_strategy_test)
 
     ### model initialization
@@ -194,12 +194,10 @@ if __name__ == '__main__':
                         hidden_size=args.hidden_size_rnn, num_layers=args.num_layers, has_input=True,
                         has_output=False).to(device)
         output = MLP_plain(h_size=args.hidden_size_rnn, embedding_size=args.embedding_size_output, y_size=args.max_prev_node).to(device)
-
     elif 'GraphRNN_RNN' in args.note:
         rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
                         hidden_size=args.hidden_size_rnn, num_layers=args.num_layers, graph_embedding_size=graph_embedding_size, has_input=False,
                         has_output=True, is_encoder=args.train_encoder, output_size=args.hidden_size_rnn_output).to(device)
-
         output = GRU_plain(input_size=1, embedding_size=args.embedding_size_rnn_output,
                            hidden_size=args.hidden_size_rnn_output, num_layers=args.num_layers, has_input=True,
                            has_output=True, output_size=1).to(device)
@@ -212,10 +210,10 @@ if __name__ == '__main__':
         train_encoder(args, dataset_loader, rnn, Z_list)
     elif args.train:
         train(args, dataset_loader, rnn, output, Z_list)
-
     if True:
         if args.train_encoder:
             test_rnn_encoder(args, rnn, dataset_loader_test)
+
 
     if args.make_graph_list:
         if not args.train:
@@ -227,27 +225,16 @@ if __name__ == '__main__':
 
 
         # how many to generate
-
         list_length = 1000
         # desired Z value (if you're using conditonal
-        if args.conditional:
-            for i,Z in enumerate([[1,0],[0,1]]):
-                Z = torch.Tensor(Z)
-                # Generate a graph list
-                G = graph_gen(args, rnn, output, Z, args.max_prev_node, args.max_num_node, list_length)
-                # save the graphs
-
-                save_graph_list(G, fns.fname_test2+"_{:d}".format(i))
-        else:
-            Z=None
-            # Generate a graph list
-            G = graph_gen(args, rnn,output,Z,args.max_prev_node,args.max_num_node,list_length)
-            # save the graphs
-            save_graph_list(G, fns.fname_test2)
+        Z = torch.Tensor([[1, 0]]*list_length) if args.conditional else None
+        # Generate a graph list
+        G = graph_gen(args, rnn,output,Z,args.max_prev_node,args.max_num_node,list_length)
+        # save the graphs
+        save_graph_list(G, fns.fname_test2)
 
     ### graph completion
     # train_graph_completion(args,dataset_loader,rnn,output)
 
     ### nll evaluation
     # train_nll(args, dataset_loader, dataset_loader, rnn, output, max_iter = 200, graph_validate_len=graph_validate_len,graph_test_len=graph_test_len)
-
