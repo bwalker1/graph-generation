@@ -462,7 +462,7 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
         y = torch.index_select(y_unsorted,0,sort_index)
 
         if use_Z:
-            Z_unsorted = data['Z'].long()
+            Z_unsorted = data['Z'].float()
             Z = torch.index_select(Z_unsorted,0,sort_index)
             Z = Variable(Z).to(device)
         else:
