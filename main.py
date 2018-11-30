@@ -229,7 +229,7 @@ if __name__ == '__main__':
         # desired Z value (if you're using conditonal
         if args.conditional:
             for i, Z in enumerate([[1, 0], [0, 1]]):
-                Z = torch.Tensor(Z)
+                Z = torch.Tensor([Z]*list_length)
                 # Generate a graph list
                 G = graph_gen(args, rnn, output, Z, args.max_prev_node, args.max_num_node, list_length)
                 # save the graphs
