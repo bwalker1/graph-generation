@@ -114,6 +114,7 @@ def create(args):
                 for k in range(100):
                     graphs.append(caveman_special(i, j, p_edge=0.5))
         args.max_prev_node = 20
+
     elif args.graph_type.startswith('community'):
         num_communities = int(args.graph_type[-1])
         print('Creating dataset with ', num_communities, ' communities')
@@ -157,9 +158,10 @@ def create(args):
 
     elif args.graph_type == 'sbm_large':
         N = 100
-        graphs = generateSetOfSBM([[N // x]*x for x in [2,4]*500])
+        # graphs = generateSetOfSBM([[N // x]*x for x in [2,4]*500])
+        graphs = generateSetOfSBM([[N // x]*x for x in [2]*1000])
 
-        args.max_prev_node = 40
+        args.max_prev_node = 80
         args.max_num_node = N
 
     elif 'barabasi_noise' in args.graph_type:

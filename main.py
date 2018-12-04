@@ -210,9 +210,9 @@ if __name__ == '__main__':
         train_encoder(args, dataset_loader, rnn, Z_list)
     elif args.train:
         train(args, dataset_loader, rnn, output, Z_list)
-    if True:
-        if args.train_encoder:
-            test_rnn_encoder(args, rnn, dataset_loader_test)
+    # if True:
+    #     if args.train_encoder:
+    #         test_rnn_encoder(args, rnn, dataset_loader_test)
 
 
     if args.make_graph_list:
