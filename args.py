@@ -21,7 +21,8 @@ class Args():
 
         ### Whether we are doing conditional generation
         self.conditional = True
-
+        self.concat = False
+        #concatentate vector rather than
         ## for comparison, removing the BFS compoenent
         # self.note = 'GraphRNN_MLP_nobfs'
         # self.note = 'GraphRNN_RNN_nobfs'

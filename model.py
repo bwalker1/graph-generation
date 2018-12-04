@@ -273,14 +273,24 @@ class LSTM_plain(nn.Module):
 
 # plain GRU model
 class GRU_plain(nn.Module):
-    def __init__(self, input_size, embedding_size, hidden_size, num_layers, graph_embedding_size=None, has_input=True, has_output=False, is_encoder=False, output_size=None):
+    def __init__(self, input_size, embedding_size, hidden_size, num_layers, graph_embedding_size=None, has_input=True, has_output=False, is_encoder=False, output_size=None,concat=False):
         super(GRU_plain, self).__init__()
         self.num_layers = num_layers
         self.hidden_size = hidden_size
         self.has_input = has_input
         self.has_output = has_output
         self.is_encoder = is_encoder
+        self.concat=concat
         self.graph_embedding_size = graph_embedding_size
+
+        # TODO: get this shaped right
+        if graph_embedding_size is not None:
+            self.use_Z = True
+            if self.concat :
+                input_size+=graph_embedding_size #we tack on Z to each input sequence
+            self.hidden_net = nn.Linear(graph_embedding_size,self.num_layers*self.hidden_size)
+        else:
+            self.use_Z = False
 
         if has_input:
             self.input = nn.Linear(input_size, embedding_size)
@@ -303,12 +313,7 @@ class GRU_plain(nn.Module):
         # initialize
         self.hidden = None  # need initialize before forward run
 
-        # TODO: get this shaped right
-        if graph_embedding_size is not None:
-            self.use_Z = True
-            self.hidden_net = nn.Linear(graph_embedding_size,self.num_layers*self.hidden_size)
-        else:
-            self.use_Z = False
+
 
         for name, param in self.rnn.named_parameters():
             if 'bias' in name:

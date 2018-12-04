@@ -446,11 +446,12 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
         y_unsorted = data['y'].float()
 
 
-
         y_len_unsorted = data['len']
         y_len_max = max(y_len_unsorted)
         x_unsorted = x_unsorted[:, 0:y_len_max, :]
         y_unsorted = y_unsorted[:, 0:y_len_max, :]
+
+
 
         # initialize lstm hidden state according to batch size
         #rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
@@ -462,10 +463,24 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
         x = torch.index_select(x_unsorted,0,sort_index)
         y = torch.index_select(y_unsorted,0,sort_index)
 
+
+        #here we add on the Z's to each of the input/outputs
         if use_Z:
-            Z_unsorted = data['Z'].float()
-            Z = torch.index_select(Z_unsorted,0,sort_index)
-            Z = Variable(Z).to(device)
+            if args.concat:
+                Z = data['Z']
+                zsize=Z.shape[1]
+
+                for i in range(x_unsorted.shape[1]):
+                    if i == 0:
+                        Ztot = Z.view(Z.shape[0], 1, -1)
+                    else:
+                        Ztot = torch.cat((Ztot, Z.view(Z.shape[0], 1, -1)), dim=1)
+                x=torch.cat((x,Ztot),dim=2)
+                rnn.hidden = rnn.init_hidden(batch_size=x.size(0))
+            else:
+                Z_unsorted = data['Z'].float()
+                Z = torch.index_select(Z_unsorted,0,sort_index)
+                Z = Variable(Z).to(device)
         else:
             rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
             Z = None
@@ -573,19 +588,20 @@ def train_rnn_forward_epoch(epoch, args, rnn, output, data_loader):
 
         # output.hidden = output.init_hidden(batch_size=x_unsorted.size(0)*x_unsorted.size(1))
 
-        if rnn.use_Z:
-            Z = data['Z'].float()
-            Z = Variable(Z).to(device)
-        else:
-            # initialize lstm hidden state according to batch size
-            rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
-            Z = None
 
         # sort input
         y_len,sort_index = torch.sort(y_len_unsorted,0,descending=True)
         y_len = y_len.numpy().tolist()
         x = torch.index_select(x_unsorted,0,sort_index)
         y = torch.index_select(y_unsorted,0,sort_index)
+
+        if rnn.use_Z:
+            Z_unsorted = data['Z'].float()
+            Z = torch.index_select(Z_unsorted,0,sort_index)
+            Z = Variable(Z).to(device)
+        else:
+            rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
+            Z = None
 
         # input, output for output rnn module
         # a smart use of pytorch builtin function: pack variable--b1_l1,b2_l1,...,b1_l2,b2_l2,...
