@@ -512,8 +512,6 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
         # print('y',y.size())
         # print('output_y',output_y.size())
 
-
-
         # if using ground truth to train
         h = rnn(x, Z, pack=True, input_len=y_len)
         h = pack_padded_sequence(h,y_len,batch_first=True).data # get packed hidden vector
