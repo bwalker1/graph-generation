@@ -812,6 +812,9 @@ def train_nll(args, dataset_train, dataset_test, rnn, output,graph_validate_len,
 def test_rnn_encoder(args, rnn, data_loader):
     rnn.eval()
 
+    Zs = []
+    ps = []
+
     for batch_idx, data in enumerate(data_loader):
         rnn.zero_grad()
         #rnn.encode_net.requires_grad=False
@@ -888,6 +891,13 @@ def test_rnn_encoder(args, rnn, data_loader):
         #print(Z)
         loss = nn.CrossEntropyLoss()(Z_pred,torch.max(Z,1)[1])
 
+        prob = list(np.array(nn.Softmax()(Z_pred).detach())[:,1])
+        correct = list(Z.detach().numpy()[:,1])
+        #print(prob)
+        #print(correct)
+        ps.extend(prob)
+        Zs.extend(correct)
+
         # compute hard max accuracy
         class_pred = torch.max(Z_pred,1)[1].long()
         class_true = torch.max(Z,1)[1].long()
@@ -900,7 +910,27 @@ def test_rnn_encoder(args, rnn, data_loader):
         if batch_idx==0: # only output first batch's statistics
             print('Testing: test loss: {:.6f}, test accuracy: {:.6f}, graph type: {}, num_layer: {}, hidden: {}, batch size: {}'.format(
                   loss.item(), acc, args.graph_type, args.num_layers, args.hidden_size_rnn,x_unsorted.shape[0]))
-            return
+
+    # create histogram and ROC curve
+    #plt.hist(ps,bins=100)
+    #plt.show()
+
+    # ROC curve
+    sort_index = sorted(range(len(ps)),key=lambda x:ps[x])
+    #ps.sort()
+    Zs=np.array(Zs)
+    true_ps  = np.array(ps)[Zs==1]
+    true_ps.sort()
+    false_ps = np.array(ps)[Zs==0]
+    false_ps.sort()
+    roc_y = [np.sum(true_ps>i)/len(true_ps) for i in false_ps]
+    roc_x = [1-i/len(false_ps) for i in range(len(false_ps))]
+    plt.plot(roc_x,roc_y)
+    plt.show()
+    #Zs = np.cumsum(np.array(Zs)[sort_index])/(len(Zs)/2)
+    #print(Zs)
+
+
 
 
 def train_rnn_encoder_epoch(epoch, args, rnn, data_loader,
@@ -922,7 +952,7 @@ def train_rnn_encoder_epoch(epoch, args, rnn, data_loader,
 
         y_unsorted = data['y'].float()
 
-        Z_unsorted = data['Z'].long()
+        Z_unsorted = data['Z'].float()
 
 
         y_len_unsorted = data['len']
@@ -978,6 +1008,7 @@ def train_rnn_encoder_epoch(epoch, args, rnn, data_loader,
         #print(Z_pred)
         #print(Z)
         loss = nn.CrossEntropyLoss()(Z_pred,torch.max(Z,1)[1])
+        #loss = nn.MSELoss()(Z_pred,Z)
         loss.backward()
 
         # compute hard max accuracy

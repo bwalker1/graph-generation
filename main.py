@@ -74,8 +74,8 @@ if __name__ == '__main__':
     generate_graphs = True
     if generate_graphs:
         graphs = create_graphs.create(args)
-        draw_graph(graphs[0],'Z=0')
-        draw_graph(graphs[-1],'Z=1')
+        #draw_graph(graphs[0],'Z=0')
+        #draw_graph(graphs[-1],'Z=1')
         #plot_degree_distribution(graphs)
         #plt.show()
 

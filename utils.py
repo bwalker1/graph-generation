@@ -188,7 +188,7 @@ def draw_graph(G, prefix = 'test'):
     plt.axis("off")
 
     pos = nx.spring_layout(G)
-    nx.draw_networkx(G, with_labels=True, node_size=35, node_color=colors,pos=pos)
+    nx.draw_networkx(G, with_labels=True, node_size=35, pos=pos)
 
 
     # plt.switch_backend('agg')
@@ -498,7 +498,7 @@ def snap_txt_output_to_nx(in_fname):
     return G
 
 def test_perturbed():
-    
+
     graphs = []
     for i in range(100,101):
         for j in range(4,5):
@@ -507,8 +507,8 @@ def test_perturbed():
     g_perturbed = perturb(graphs, 0.9)
     print([g.number_of_edges() for g in graphs])
     print([g.number_of_edges() for g in g_perturbed])
-    
-    
+
+
 def plot_degree_distribution(graphs):
     degree_sequence = sorted([d for G in graphs for n, d in G.degree()], reverse=True)  # degree sequence
     # print "Degree sequence", degree_sequence
@@ -523,7 +523,6 @@ if __name__ == '__main__':
     #graphs = load_graph_list('graphs/' + 'GraphRNN_RNN_community4_4_128_train_0.dat')
     #graphs = load_graph_list('graphs/' + 'GraphRNN_RNN_community4_4_128_pred_2500_1.dat')
     graphs = load_graph_list('eval_results/mmsb/' + 'community41.dat')
-    
+
     for i in range(0, 160, 16):
         draw_graph_list(graphs[i:i+16], 4, 4, fname='figures/community4_' + str(i))
-
