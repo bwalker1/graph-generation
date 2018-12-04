@@ -46,6 +46,8 @@ def graph_gen(args, rnn,output,Z,max_prev_node,max_num_node,test_batch_size):
         output.hidden = torch.cat((h.permute(1,0,2), hidden_null),
                                   dim=0)  # num_layers, batch_size, hidden_size
         x_step = Variable(torch.zeros(test_batch_size,1,max_prev_node)).to(device)
+        rnn.hidden = rnn.init_hidden(batch_size=test_batch_size)
+
         output_x_step = Variable(torch.ones(test_batch_size,1,1)).to(device)
         for j in range(min(max_prev_node,i+1)):
             output_y_pred_step = output(output_x_step)
