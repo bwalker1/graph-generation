@@ -36,11 +36,11 @@ def graph_gen(args, rnn,output,Z,max_prev_node,max_num_node,test_batch_size):
     Z = Variable(Z).to(device)
     y_pred_long = Variable(torch.zeros(test_batch_size, max_num_node, max_prev_node)).to(device) # discrete prediction
     x_step = Variable(torch.ones(test_batch_size,1,max_prev_node)).to(device)
-    
+    rnn.hidden = rnn.init_hidden(batch_size=test_batch_size)
     #
     h = rnn(x_step,Z,input_len = [0,]*test_batch_size)
     for i in range(max_num_node):
-        
+
         # output.hidden = h.permute(1,0,2)
         hidden_null = Variable(torch.zeros(args.num_layers - 1, h.size(0), h.size(2))).to(device)
         output.hidden = torch.cat((h.permute(1,0,2), hidden_null),
@@ -54,7 +54,7 @@ def graph_gen(args, rnn,output,Z,max_prev_node,max_num_node,test_batch_size):
             output.hidden = Variable(output.hidden.data).to(device)
         y_pred_long[:, i:i + 1, :] = x_step
         rnn.hidden = Variable(rnn.hidden.data).to(device)
-        
+
         h = rnn(x_step)
     y_pred_long_data = y_pred_long.data.long()
 
