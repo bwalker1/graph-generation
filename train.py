@@ -669,8 +669,12 @@ def train(args, dataset_train, rnn, output, Z_list = None):
     if args.load:
 
         fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
+        if args.concat:
+            fname=re.sub("\.dat","_concat.data")
         rnn.load_state_dict(torch.load(fname,map_location='cpu'))
         fname = args.model_save_path + fns.fname + 'output_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
+        if args.concat:
+            fname=re.sub("\.dat","_concat.data")
         output.load_state_dict(torch.load(fname,map_location='cpu'))
 
         args.lr = 0.00001
@@ -729,8 +733,13 @@ def train(args, dataset_train, rnn, output, Z_list = None):
         if args.save:
             if epoch % args.epochs_save == 0:
                 fname = args.model_save_path + fns.fname + 'lstm_' + str(epoch) + '_cond=' + str(args.conditional) + '.dat'
+                if args.concat:
+                    fname = re.sub("\.dat", "_concat.data")
                 torch.save(rnn.state_dict(), fname)
+
                 fname = args.model_save_path + fns.fname + 'output_' + str(epoch) + '_cond=' + str(args.conditional) + '.dat'
+                if args.concat:
+                    fname = re.sub("\.dat", "_concat.data")
                 torch.save(output.state_dict(), fname)
         epoch += 1
     np.save(args.timing_save_path+fns.fname,time_all)
