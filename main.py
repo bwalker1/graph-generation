@@ -74,8 +74,8 @@ if __name__ == '__main__':
     generate_graphs = True
     if generate_graphs:
         graphs = create_graphs.create(args)
-        #draw_graph(graphs[0],'caveman')
-        #draw_graph(graphs[-1],'grid')
+        draw_graph(graphs[0],'Z=0')
+        draw_graph(graphs[-1],'Z=1')
         #plot_degree_distribution(graphs)
         #plt.show()
 
@@ -170,7 +170,7 @@ if __name__ == '__main__':
         sample_strategy_test = torch.utils.data.sampler.SequentialSampler(dataset_test)
         dataset_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, num_workers=args.num_workers,
                                                    sampler=sample_strategy)
-        dataset_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=11, num_workers=args.num_workers,
+        dataset_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=args.test_batch_size, num_workers=args.num_workers,
                                                    sampler=sample_strategy_test)
 
     ### model initialization
@@ -180,7 +180,7 @@ if __name__ == '__main__':
 
     # check whether we're using conditional input
     if args.conditional:
-        graph_embedding_size = 3
+        graph_embedding_size = 2
     else:
         graph_embedding_size = None
 

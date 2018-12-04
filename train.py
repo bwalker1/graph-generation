@@ -816,9 +816,7 @@ def test_rnn_encoder(args, rnn, data_loader):
         rnn.zero_grad()
         #rnn.encode_net.requires_grad=False
 
-        cutoff = 24
         x_unsorted = data['x'].float()
-        x_unsorted = x_unsorted[0:cutoff,:,:]
         #print(data['id'])
         #print(x_unsorted[:,:,0])
         #print(data['id'])
@@ -827,14 +825,12 @@ def test_rnn_encoder(args, rnn, data_loader):
         #exit(1)
 
         y_unsorted = data['y'].float()
-        y_unsorted = y_unsorted[0:cutoff,:,:]
 
         Z_unsorted = data['Z'].long()
 
 
         y_len_unsorted = data['len']
 
-        y_len_unsorted = y_len_unsorted[0:cutoff]
         y_len_max = max(y_len_unsorted)
         x_unsorted = x_unsorted[:, 0:y_len_max, :]
         y_unsorted = y_unsorted[:, 0:y_len_max, :]
@@ -887,7 +883,6 @@ def test_rnn_encoder(args, rnn, data_loader):
         # use cross entropy loss
 
         #print(Z.size())
-        Z = Z[0:cutoff,:]
         Z = Z.to(device)
         #print(Z_pred)
         #print(Z)
@@ -903,8 +898,8 @@ def test_rnn_encoder(args, rnn, data_loader):
 
 
         if batch_idx==0: # only output first batch's statistics
-            print('Testing: test loss: {:.6f}, test accuracy: {:.6f}, graph type: {}, num_layer: {}, hidden: {}'.format(
-                  loss.item(), acc, args.graph_type, args.num_layers, args.hidden_size_rnn))
+            print('Testing: test loss: {:.6f}, test accuracy: {:.6f}, graph type: {}, num_layer: {}, hidden: {}, batch size: {}'.format(
+                  loss.item(), acc, args.graph_type, args.num_layers, args.hidden_size_rnn,x_unsorted.shape[0]))
             return
 
 

@@ -44,7 +44,7 @@ class Args():
         # self.graph_type = 'citeseer_small'
 
         # self.graph_type = 'grid'
-        
+
         self.graph_type = 'caveman_small_mixed'
 
         # self.graph_type = 'barabasi_noise'
@@ -62,7 +62,7 @@ class Args():
         #if 'small' in self.graph_type:
         #    self.parameter_shrink = 2
         #else:
-        self.parameter_shrink = 4
+        self.parameter_shrink = 2
         self.hidden_size_rnn = int(128/self.parameter_shrink) # hidden size for main RNN
         self.hidden_size_rnn_output = 16 # hidden size for output RNN
         self.embedding_size_rnn = int(64/self.parameter_shrink) # the size for LSTM input
@@ -71,8 +71,8 @@ class Args():
 
         self.batch_size = 32 # normal: 32, and the rest should be changed accordingly
         self.test_batch_size = 32
-        self.test_total_size = 1    
-        self.num_layers = 2
+        self.test_total_size = 1
+        self.num_layers = 4
 
         ### training config
         self.num_workers = 4 # num workers to load data, default 4
@@ -82,7 +82,7 @@ class Args():
         self.epochs_test = 100
         self.epochs_log = 1
         self.epochs_save = 100
-        
+
         self.run_id = ''
 
         self.lr = 0.0005
@@ -105,7 +105,7 @@ class Args():
         self.load = False  # if load model, default lr is very low
         self.load_epoch = 500
         self.save = True
-        
+
         self.max_prev_node_iter = 4000
 
 
@@ -121,11 +121,11 @@ class Args():
         # output graph list options
         #self.output_set_length=1000
         self.output_name="graph_list.dat"
-        
+
         # whether we should train an encoder RNN on the given set
         self.train_encoder = True
-        
-        
+
+
 class filenames():
     def __init__(self,args):
         ### filenames to save intemediate and final outputs
@@ -135,4 +135,3 @@ class filenames():
         self.fname_test = args.note + '_' + str(args.run_id) + '_'  + args.graph_type + '_' + str(args.num_layers) + '_' + str(args.hidden_size_rnn) + '_test_'
         self.fname_baseline = args.graph_save_path + str(args.run_id) + '_' +  args.graph_type + args.generator_baseline+'_'+args.metric_baseline
         self.fname_test2 = args.graph_save_path + str(args.run_id) + '_' + args.graph_type + args.generator_baseline + '_' + args.output_name
-
