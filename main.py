@@ -222,12 +222,12 @@ if __name__ == '__main__':
             # if we didn't just train, load something instead
             fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
             if args.concat:
-                fname = re.sub("\.dat", "_concat.data")
+                fname = re.sub("\.dat", "_concat.dat",fname)
             rnn.load_state_dict(torch.load(fname,map_location='cpu'))
 
             fname = args.model_save_path + fns.fname + 'output_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
             if args.concat:
-                fname = re.sub("\.dat", "_concat.data")
+                fname = re.sub("\.dat", "_concat.dat",fname)
             output.load_state_dict(torch.load(fname,map_location='cpu'))
 
 
