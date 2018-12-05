@@ -477,6 +477,7 @@ def train_rnn_epoch(epoch, args, rnn, output, data_loader,
                         Ztot = torch.cat((Ztot, Z.view(Z.shape[0], 1, -1)), dim=1)
                 x=torch.cat((x,Ztot),dim=2)
                 rnn.hidden = rnn.init_hidden(batch_size=x.size(0))
+                Z=None #we initialize hidden state as normal here
             else:
                 Z_unsorted = data['Z'].float()
                 Z = torch.index_select(Z_unsorted,0,sort_index)

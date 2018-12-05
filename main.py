@@ -43,6 +43,8 @@ if __name__ == '__main__':
 
     if args.conditional:
         print("Using conditional input")
+        if args.concat:
+            print("concatenating Z to input")
     else:
         print("Not using conditional input")
     os.environ['CUDA_VISIBLE_DEVICES'] = str(args.cuda)
