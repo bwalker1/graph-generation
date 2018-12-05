@@ -33,16 +33,25 @@ from graph_gen import *
 def graph_gen(args, rnn,output,Z,max_prev_node,max_num_node,test_batch_size):
     # generate graphs
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+
+    # here we add on the Z's to each of the input/outputs
+
     if Z is not None:
         Z = Variable(Z).to(device)
     else:
         rnn.hidden = rnn.init_hidden(batch_size=test_batch_size)
 
     y_pred_long = Variable(torch.zeros(test_batch_size, max_num_node, max_prev_node)).to(device) # discrete prediction
+
     x_step = Variable(torch.ones(test_batch_size,1,max_prev_node)).to(device)
 
-    #
-    h = rnn(x_step,Z,input_len = [0,]*test_batch_size)
+    if args.concat:
+        Z_cpy=Z.view(Z.shape[0],1,Z.shape[1])
+        Z=None
+        x_step=torch.cat((x_step,Z_cpy),dim=2)
+
+
+    h = rnn(x_step,Z,input_len = [0,]*test_batch_size) #first step
     for i in range(max_num_node):
         
         # output.hidden = h.permute(1,0,2)
@@ -50,6 +59,8 @@ def graph_gen(args, rnn,output,Z,max_prev_node,max_num_node,test_batch_size):
         output.hidden = torch.cat((h.permute(1,0,2), hidden_null),
                                   dim=0)  # num_layers, batch_size, hidden_size
         x_step = Variable(torch.zeros(test_batch_size,1,max_prev_node)).to(device)
+        if args.concat:
+            x_step = torch.cat((x_step, Z_cpy), dim=2)
 
         output_x_step = Variable(torch.ones(test_batch_size,1,1)).to(device)
         for j in range(min(max_prev_node,i+1)):
@@ -57,7 +68,10 @@ def graph_gen(args, rnn,output,Z,max_prev_node,max_num_node,test_batch_size):
             output_x_step = sample_sigmoid(output_y_pred_step, sample=True, sample_time=1)
             x_step[:,:,j:j+1] = output_x_step
             output.hidden = Variable(output.hidden.data).to(device)
-        y_pred_long[:, i:i + 1, :] = x_step
+        if args.concat:
+            y_pred_long[:, i:i + 1, :] = x_step[:,:,:-2] #last 2 are Z
+        else:
+            y_pred_long[:, i:i + 1, :] = x_step
         rnn.hidden = Variable(rnn.hidden.data).to(device)
         
         h = rnn(x_step)
