@@ -5,6 +5,11 @@ from utils import *
 from data import *
 from sbm import *
 
+def onehot(k,n):
+    v = np.array([0,]*n)
+    v[k]=1
+    return v
+
 def create(args):
 ### load datasets
     graphs=[]
@@ -86,18 +91,18 @@ def create(args):
         #graphs += generateSetOfSBM([[64 // x]*x for x in [2]*500])
     elif args.graph_type=='er_ba_mixed':
         graphs = []
-        for k in range(100):
+        for k in range(500):
             G = nx.random_regular_graph(4,50)
             G.graph['Z'] = np.array([1,0])
             graphs.append(G)
-        for k in range(100):
+        for k in range(500):
             G = nx.barabasi_albert_graph(50,2)
             G.graph['Z'] = np.array([0,1])
             graphs.append(G)
         args.max_prev_node=50
     elif args.graph_type=='caveman_small_mixed':
         graphs = []
-        for k in range(512):
+        for k in range(500):
             G = nx.relaxed_caveman_graph(2,int(18),p=0.15)
             G.graph['Z'] = np.array([1,0])
             G.graph['id'] = k
@@ -106,20 +111,58 @@ def create(args):
 #             G = nx.relaxed_caveman_graph(3,int(12),p=0.15)
 #             G.graph['Z'] = np.array([0,1])
 #             graphs.append(G)
-        for k in range(512):
+        for k in range(500):
             G = nx.relaxed_caveman_graph(3,int(12),p=0.15)
             G.graph['Z'] = np.array([0,1])
             G.graph['id'] = k
             graphs.append(G)
-        # for k in range(50):
-        #     i = 6;
-        #     j = 6;
-        #     G = nx.grid_2d_graph(i,j)
-        #     #G = nx.relaxed_caveman_graph(3,int(12),p=0.15)
-        #     G.graph['Z'] = np.array([0,0,1])
-        #     G.graph['id']=50+k
-        #     graphs.append(G)
         args.max_prev_node = 30
+    elif args.graph_type=='many_classes':
+        for k in range(100):
+            G = nx.relaxed_caveman_graph(2,int(30),p=0.15)
+            G.graph['Z'] = onehot(0,10)
+            graphs.append(G)
+        for k in range(100):
+            G = nx.relaxed_caveman_graph(3,int(20),p=0.15)
+            G.graph['Z'] = onehot(1,10)
+            graphs.append(G)
+        for k in range(100):
+            G = nx.relaxed_caveman_graph(4,int(15),p=0.15)
+            G.graph['Z'] = onehot(2,10)
+            graphs.append(G)
+        for k in range(100):
+            G = nx.relaxed_caveman_graph(5,int(12),p=0.15)
+            G.graph['Z'] = onehot(3,10)
+            graphs.append(G)
+        for k in range(100):
+            G = nx.ladder_graph(60)
+            G.graph['Z'] = onehot(4,10)
+        for k in range(100):
+            G = nx.grid_2d_graph(10,6)
+            G.graph['Z'] = onehot(5,10)
+            graphs.append(G)
+        for k in range(100):
+            G = nx.random_regular_graph(4,60)
+            G.graph['Z'] = onehot(6,10)
+            graphs.append(G)
+        for k in range(100):
+            G = nx.barabasi_albert_graph(60,2)
+            G.graph['Z'] = onehot(7,10)
+            graphs.append(G)
+        for k in range(100):
+            G = nx.balanced_tree(2,6)
+            G.graph['Z'] = onehot(7,10)
+            graphs.append(G)
+        for k in range(100):
+            G = nx.random_regular_graph(4,60)
+            G.graph['Z'] = onehot(8,10)
+            graphs.append(G)
+        for k in range(100):
+            G = nx.barabasi_albert_graph(60,2)
+            G.graph['Z'] = onehot(9,10)
+            graphs.append(G)
+
+        args.max_prev_node = 50
     elif args.graph_type=='caveman_small_single':
         # graphs = []
         # for i in range(2,5):

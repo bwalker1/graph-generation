@@ -74,17 +74,20 @@ if __name__ == '__main__':
     generate_graphs = True
     if generate_graphs:
         graphs = create_graphs.create(args)
-        #draw_graph(graphs[0],'Z=0')
-        #draw_graph(graphs[-1],'Z=1')
+        draw_graph(graphs[0],'Z=0')
+        draw_graph(graphs[-1],'Z=1')
         #plot_degree_distribution(graphs)
         #plt.show()
 
         # split datasets
         #random.seed(123)
-        shuffle(graphs)
+
+        #shuffle(graphs)
         graphs_len = len(graphs)
-        graphs_test = graphs[int(0.8 * graphs_len):]
-        graphs_train = graphs[0:int(0.8*graphs_len)]
+        #graphs_test = graphs[int(0.8 * graphs_len):]
+        graphs_test = graphs[400:500] + graphs[900:1000]
+        graphs_train = graphs[0:400]+graphs[500:900]
+        shuffle(graphs_train)
         graphs_validate = graphs[0:int(0.2*graphs_len)]
 
 
@@ -180,7 +183,7 @@ if __name__ == '__main__':
 
     # check whether we're using conditional input
     if args.conditional:
-        graph_embedding_size = 2
+        graph_embedding_size = 10
     else:
         graph_embedding_size = None
 

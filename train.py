@@ -912,11 +912,10 @@ def test_rnn_encoder(args, rnn, data_loader):
                   loss.item(), acc, args.graph_type, args.num_layers, args.hidden_size_rnn,x_unsorted.shape[0]))
 
     # create histogram and ROC curve
-    #plt.hist(ps,bins=100)
-    #plt.show()
+
 
     # ROC curve
-    sort_index = sorted(range(len(ps)),key=lambda x:ps[x])
+    sort_index =sorted(range(len(ps)),key=lambda x:ps[x])
     #ps.sort()
     Zs=np.array(Zs)
     true_ps  = np.array(ps)[Zs==1]
@@ -925,8 +924,20 @@ def test_rnn_encoder(args, rnn, data_loader):
     false_ps.sort()
     roc_y = [np.sum(true_ps>i)/len(true_ps) for i in false_ps]
     roc_x = [1-i/len(false_ps) for i in range(len(false_ps))]
+
+    plt.figure(num=1,figsize=(4,3))
+    plt.hist(true_ps,bins=np.linspace(0,1,101))
+    plt.hist(false_ps,bins=np.linspace(0,1,101))
+    plt.savefig('figures/hist.png', dpi=200)
+    plt.close()
+
+    roc_x.append(0)
+    roc_y.append(0)
+
+    plt.figure(num=2,figsize=(4,3))
     plt.plot(roc_x,roc_y)
-    plt.show()
+    plt.savefig('figures/roc.png', dpi=200)
+    plt.close()
     #Zs = np.cumsum(np.array(Zs)[sort_index])/(len(Zs)/2)
     #print(Zs)
 

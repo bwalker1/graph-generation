@@ -188,7 +188,7 @@ def draw_graph(G, prefix = 'test'):
     plt.axis("off")
 
     pos = nx.spring_layout(G)
-    nx.draw_networkx(G, with_labels=True, node_size=35, pos=pos)
+    nx.draw_networkx(G, with_labels=False, node_size=35, pos=pos)
 
 
     # plt.switch_backend('agg')
