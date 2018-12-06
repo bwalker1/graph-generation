@@ -154,11 +154,11 @@ def create(args):
             G.graph['Z'] = onehot(7,10)
             graphs.append(G)
         for k in range(100):
-            G = nx.random_regular_graph(4,60)
+            G = nx.balanced_tree(4,3)
             G.graph['Z'] = onehot(8,10)
             graphs.append(G)
         for k in range(100):
-            G = nx.barabasi_albert_graph(60,2)
+            G = nx.wheel_graph(60)
             G.graph['Z'] = onehot(9,10)
             graphs.append(G)
 
