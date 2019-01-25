@@ -892,7 +892,7 @@ def test_rnn_encoder(args, rnn, data_loader):
         loss = nn.CrossEntropyLoss()(Z_pred,torch.max(Z,1)[1])
 
         prob = list(np.array(nn.Softmax()(Z_pred).detach())[:,1])
-        correct = list(Z.detach().numpy()[:,1])
+        correct = list(Z.detach().cpu().numpy()[:,1])
         #print(prob)
         #print(correct)
         ps.extend(prob)
@@ -1018,8 +1018,8 @@ def train_rnn_encoder_epoch(epoch, args, rnn, data_loader,
         Z=Z.to(device)
         #print(Z_pred)
         #print(Z)
-        loss = nn.CrossEntropyLoss()(Z_pred,torch.max(Z,1)[1])
-        #loss = nn.MSELoss()(Z_pred,Z)
+        #loss = nn.CrossEntropyLoss()(Z_pred,torch.max(Z,1)[1])
+        loss = nn.MSELoss()(Z_pred,Z)
         loss.backward()
 
         # compute hard max accuracy

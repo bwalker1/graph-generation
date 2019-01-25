@@ -1,3 +1,5 @@
+# this gets rid of annoying deprecation warnings when you import other people's stuff
+# note: it also gets rid of potentially legitimate warnings
 def warn(*args, **kwargs):
     pass
 import warnings
@@ -74,8 +76,8 @@ if __name__ == '__main__':
     generate_graphs = True
     if generate_graphs:
         graphs = create_graphs.create(args)
-        #draw_graph(graphs[0],'Z=0')
-        #draw_graph(graphs[-1],'Z=1')
+        draw_graph(graphs[0],'Z=0')
+        draw_graph(graphs[-1],'Z=1')
         #plot_degree_distribution(graphs)
         #plt.show()
 
@@ -183,7 +185,7 @@ if __name__ == '__main__':
 
     # check whether we're using conditional input
     if args.conditional:
-        graph_embedding_size = 10
+        graph_embedding_size = 2
     else:
         graph_embedding_size = None
 
