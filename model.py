@@ -22,8 +22,7 @@ import time
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 
-
-def binary_cross_entropy_weight(y_pred, y,has_weight=False, weight_length=1, weight_max=10):
+def binary_cross_entropy_weight(y_pred, y, has_weight=False, weight_length=1, weight_max=10):
     '''
 
     :param y_pred:
@@ -33,16 +32,14 @@ def binary_cross_entropy_weight(y_pred, y,has_weight=False, weight_length=1, wei
     :return:
     '''
     if has_weight:
-        weight = torch.ones(y.size(0),y.size(1),y.size(2))
-        weight_linear = torch.arange(1,weight_length+1)/weight_length*weight_max
-        weight_linear = weight_linear.view(1,weight_length,1).repeat(y.size(0),1,y.size(2))
-        weight[:,-1*weight_length:,:] = weight_linear
+        weight = torch.ones(y.size(0), y.size(1), y.size(2))
+        weight_linear = torch.arange(1, weight_length + 1) / weight_length * weight_max
+        weight_linear = weight_linear.view(1, weight_length, 1).repeat(y.size(0), 1, y.size(2))
+        weight[:, -1 * weight_length:, :] = weight_linear
         loss = F.binary_cross_entropy(y_pred, y, weight=weight.to(device))
     else:
         loss = F.binary_cross_entropy(y_pred, y)
     return loss
-
-
 
 
 def sample_sigmoid(y, sample, thresh=0.5, sample_time=2):
@@ -59,24 +56,24 @@ def sample_sigmoid(y, sample, thresh=0.5, sample_time=2):
     y = F.sigmoid(y)
     # do sampling
     if sample:
-        if sample_time>1:
-            y_result = Variable(torch.rand(y.size(0),y.size(1),y.size(2))).to(device)
+        if sample_time > 1:
+            y_result = Variable(torch.rand(y.size(0), y.size(1), y.size(2))).to(device)
             # loop over all batches
             for i in range(y_result.size(0)):
                 # do 'multi_sample' times sampling
                 for j in range(sample_time):
                     y_thresh = Variable(torch.rand(y.size(1), y.size(2))).to(device)
                     y_result[i] = torch.gt(y[i], y_thresh).float()
-                    if (torch.sum(y_result[i]).data>0).any():
+                    if (torch.sum(y_result[i]).data > 0).any():
                         break
                     # else:
                     #     print('all zero',j)
         else:
-            y_thresh = Variable(torch.rand(y.size(0),y.size(1),y.size(2))).to(device)
-            y_result = torch.gt(y,y_thresh).float()
+            y_thresh = Variable(torch.rand(y.size(0), y.size(1), y.size(2))).to(device)
+            y_result = torch.gt(y, y_thresh).float()
     # do max likelihood based on some threshold
     else:
-        y_thresh = Variable(torch.ones(y.size(0), y.size(1), y.size(2))*thresh).to(device)
+        y_thresh = Variable(torch.ones(y.size(0), y.size(1), y.size(2)) * thresh).to(device)
         y_result = torch.gt(y, y_thresh).float()
     return y_result
 
@@ -99,15 +96,15 @@ def sample_sigmoid_supervised(y_pred, y, current, y_len, sample_time=2):
     # loop over all batches
     for i in range(y_result.size(0)):
         # using supervision
-        if current<y_len[i]:
+        if current < y_len[i]:
             while True:
                 y_thresh = Variable(torch.rand(y_pred.size(1), y_pred.size(2))).to(device)
                 y_result[i] = torch.gt(y_pred[i], y_thresh).float()
                 # print('current',current)
                 # print('y_result',y_result[i].data)
                 # print('y',y[i])
-                y_diff = y_result[i].data-y[i]
-                if (y_diff>=0).all():
+                y_diff = y_result[i].data - y[i]
+                if (y_diff >= 0).all():
                     break
         # supervision done
         else:
@@ -115,9 +112,10 @@ def sample_sigmoid_supervised(y_pred, y, current, y_len, sample_time=2):
             for j in range(sample_time):
                 y_thresh = Variable(torch.rand(y_pred.size(1), y_pred.size(2))).to(device)
                 y_result[i] = torch.gt(y_pred[i], y_thresh).float()
-                if (torch.sum(y_result[i]).data>0).any():
+                if (torch.sum(y_result[i]).data > 0).any():
                     break
     return y_result
+
 
 def sample_sigmoid_supervised_simple(y_pred, y, current, y_len, sample_time=2):
     '''
@@ -137,7 +135,7 @@ def sample_sigmoid_supervised_simple(y_pred, y, current, y_len, sample_time=2):
     # loop over all batches
     for i in range(y_result.size(0)):
         # using supervision
-        if current<y_len[i]:
+        if current < y_len[i]:
             y_result[i] = y[i]
         # supervision done
         else:
@@ -145,16 +143,15 @@ def sample_sigmoid_supervised_simple(y_pred, y, current, y_len, sample_time=2):
             for j in range(sample_time):
                 y_thresh = Variable(torch.rand(y_pred.size(1), y_pred.size(2))).to(device)
                 y_result[i] = torch.gt(y_pred[i], y_thresh).float()
-                if (torch.sum(y_result[i]).data>0).any():
+                if (torch.sum(y_result[i]).data > 0).any():
                     break
     return y_result
 
 
-
-
 # plain GRU model
 class GRU_plain(nn.Module):
-    def __init__(self, input_size, embedding_size, hidden_size, num_layers, graph_embedding_size=None, has_input=True, has_output=False, is_encoder=False, output_size=None):
+    def __init__(self, input_size, embedding_size, hidden_size, num_layers, graph_embedding_size=None, has_input=True,
+                 has_output=False, is_encoder=False, output_size=None):
         super(GRU_plain, self).__init__()
         self.num_layers = num_layers
         self.hidden_size = hidden_size
@@ -178,7 +175,8 @@ class GRU_plain(nn.Module):
 
         if self.is_encoder:
             assert graph_embedding_size is not None
-            self.encode_net = nn.Sequential(nn.Linear(hidden_size,hidden_size,bias=False),nn.ReLU(),nn.Linear(hidden_size,graph_embedding_size))
+            self.encode_net = nn.Sequential(nn.Linear(hidden_size, hidden_size, bias=False), nn.ReLU(),
+                                            nn.Linear(hidden_size, graph_embedding_size))
 
         self.relu = nn.ReLU()
         # initialize
@@ -186,7 +184,7 @@ class GRU_plain(nn.Module):
 
         if graph_embedding_size is not None:
             self.use_Z = True
-            self.hidden_net = nn.Linear(graph_embedding_size,self.num_layers*self.hidden_size)
+            self.hidden_net = nn.Linear(graph_embedding_size, self.num_layers * self.hidden_size)
         else:
             self.use_Z = False
 
@@ -194,7 +192,7 @@ class GRU_plain(nn.Module):
             if 'bias' in name:
                 nn.init.constant_(param, 0.25)
             elif 'weight' in name:
-                nn.init.xavier_uniform_(param,gain=nn.init.calculate_gain('sigmoid'))
+                nn.init.xavier_uniform_(param, gain=nn.init.calculate_gain('sigmoid'))
         for m in self.modules():
             if isinstance(m, nn.Linear):
                 m.weight.data = init.xavier_uniform_(m.weight.data, gain=nn.init.calculate_gain('relu'))
@@ -215,52 +213,23 @@ class GRU_plain(nn.Module):
             if input_len is None:
                 # need to provide input_len so we know batch size
                 raise ValueError
-            if self.use_Z == False:
+            if not self.use_Z:
                 # rnn was created without a graph embedding size and has no Z init network
                 raise RuntimeError
             batch_size = len(input_len)
             # Run Z through the network and then reshape it accordingly
-            self.hidden = self.hidden_net(Z).view(batch_size,self.num_layers,self.hidden_size).transpose(0,1).contiguous()
+            self.hidden = self.hidden_net(Z).view(batch_size, self.num_layers, self.hidden_size)\
+                .transpose(0, 1).contiguous()
 
         output_raw, self.hidden = self.rnn(input, self.hidden)
 
         if pack:
             output_raw = pad_packed_sequence(output_raw, batch_first=True)[0]
         if self.is_encoder:
-            #print(output_raw[:,-1,:].size())
-            output_raw = self.encode_net(output_raw[:,-1,:])
-            #output_raw = output_raw[:,-1,0:self.graph_embedding_size]
+            # print(output_raw[:,-1,:].size())
+            output_raw = self.encode_net(output_raw[:, -1, :])
+            # output_raw = output_raw[:,-1,0:self.graph_embedding_size]
         elif self.has_output:
             output_raw = self.output(output_raw)
         # return hidden state at each time step
         return output_raw
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
