@@ -53,15 +53,10 @@ class GRUAutoencoder(nn.Module):
     def init_hidden(self, batch_size):
         pass
 
-    def forward(self, x, output_x=False, pack=False, input_len=None, input_len_output=None, only_encode=False, only_decode=False):
-        # handle one-way options
-        if only_encode and only_decode:
-            raise RuntimeError
-
-
+    def forward(self, x, output_x=False, pack=False, input_len=None, input_len_output=None, only_encode=False, decode_Z=None):
         # compute Z
-        if only_decode:
-            Z = x
+        if decode_Z is not None:
+            Z = decode_Z
         else:
             Z = self.encoder_rnn(x, pack=False, input_len=input_len)
 

@@ -2,7 +2,10 @@
 # note: it also gets rid of potentially legitimate warnings
 def warn(*args, **kwargs):
     pass
+
+
 import warnings
+
 warnings.warn = warn
 
 from train import *
@@ -15,7 +18,7 @@ import collections
 if __name__ == '__main__':
     # set up to work with or without cuda
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    print("Main is using "+('cuda:0' if torch.cuda.is_available() else 'cpu'))
+    print("Main is using " + ('cuda:0' if torch.cuda.is_available() else 'cpu'))
     # All necessary arguments are defined in args.py
     args_default = Args()
 
@@ -23,25 +26,19 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     default_vars = vars(args_default)
-    for k,v in default_vars.items():
+    for k, v in default_vars.items():
         t = type(v)
-        if t==bool:
+        if t == bool:
             # boolean arguments should be handled differently than value arguments
-            parser.add_argument('--'+k,dest=k,action =  'store_true')
-            parser.add_argument('--no-'+k,dest=k,action = 'store_false')
-            parser.set_defaults(**{k:v})
+            parser.add_argument('--' + k, dest=k, action='store_true')
+            parser.add_argument('--no-' + k, dest=k, action='store_false')
+            parser.set_defaults(**{k: v})
         else:
-            parser.add_argument('--'+k,dest=k,default=v,type=t)
+            parser.add_argument('--' + k, dest=k, default=v, type=t)
 
-
-
-    #parser.add_argument('--conditional', default=True)
-    #parser.set_defaults(**vars(args_default))
+    # parser.add_argument('--conditional', default=True)
+    # parser.set_defaults(**vars(args_default))
     args = parser.parse_args()
-
-
-
-
 
     if args.conditional:
         print("Using conditional input")
@@ -50,7 +47,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = str(args.cuda)
     print('CUDA', args.cuda)
     fns = filenames(args)
-    print('File name prefix',fns.fname)
+    print('File name prefix', fns.fname)
     # check if necessary directories exist
     if not os.path.isdir(args.model_save_path):
         os.makedirs(args.model_save_path)
@@ -71,28 +68,26 @@ if __name__ == '__main__':
         if args.clean_tensorboard:
             if os.path.isdir("tensorboard"):
                 shutil.rmtree("tensorboard")
-        configure("tensorboard/run"+time, flush_secs=5)
+        configure("tensorboard/run" + time, flush_secs=5)
 
     generate_graphs = True
     if generate_graphs:
         graphs = create_graphs.create(args)
-        draw_graph(graphs[0],'Z=0')
-        draw_graph(graphs[-1],'Z=1')
-        #plot_degree_distribution(graphs)
-        #plt.show()
+        draw_graph(graphs[0], 'Z=0')
+        draw_graph(graphs[-1], 'Z=1')
+        # plot_degree_distribution(graphs)
+        # plt.show()
 
         # split datasets
-        #random.seed(123)
+        # random.seed(123)
 
-        #shuffle(graphs)
+        # shuffle(graphs)
         graphs_len = len(graphs)
-        #graphs_test = graphs[int(0.8 * graphs_len):]
+        # graphs_test = graphs[int(0.8 * graphs_len):]
         graphs_test = graphs[400:500] + graphs[900:1000]
-        graphs_train = graphs[0:400]+graphs[500:900]
+        graphs_train = graphs[0:400] + graphs[500:900]
         shuffle(graphs_train)
-        graphs_validate = graphs[0:int(0.2*graphs_len)]
-
-
+        graphs_validate = graphs[0:int(0.2 * graphs_len)]
 
         if args.conditional:
             Z_list = [G.graph['Z'] for G in graphs]
@@ -108,7 +103,6 @@ if __name__ == '__main__':
         # graphs_train = graphs[0:int(0.8 * graphs_len)]
         # graphs_validate = graphs[int(0.2 * graphs_len):int(0.4 * graphs_len)]
 
-
         graph_validate_len = 0
         for graph in graphs_validate:
             graph_validate_len += graph.number_of_nodes()
@@ -121,17 +115,15 @@ if __name__ == '__main__':
         graph_test_len /= len(graphs_test)
         print('graph_test_len', graph_test_len)
 
-
-
         args.max_num_node = max([graphs[i].number_of_nodes() for i in range(len(graphs))])
         max_num_edge = max([graphs[i].number_of_edges() for i in range(len(graphs))])
         min_num_edge = min([graphs[i].number_of_edges() for i in range(len(graphs))])
 
         # args.max_num_node = 2000
         # show graphs statistics
-        print('total graph num: {}, training set: {}'.format(len(graphs),len(graphs_train)))
+        print('total graph num: {}, training set: {}'.format(len(graphs), len(graphs_train)))
         print('max number node: {}'.format(args.max_num_node))
-        print('max/min number edge: {}; {}'.format(max_num_edge,min_num_edge))
+        print('max/min number edge: {}; {}'.format(max_num_edge, min_num_edge))
         print('max previous node: {}'.format(args.max_prev_node))
 
         # save ground truth graphs
@@ -140,75 +132,42 @@ if __name__ == '__main__':
         save_graph_list(graphs, args.graph_save_path + fns.fname_test + '0.dat')
         print('train and test graphs saved at: ', args.graph_save_path + fns.fname_test + '0.dat')
 
-        ### comment when normal training, for graph completion only
-        # p = 0.5
-        # for graph in graphs_train:
-        #     for node in list(graph.nodes()):
-        #         # print('node',node)
-        #         if np.random.rand()>p:
-        #             graph.remove_node(node)
-            # for edge in list(graph.edges()):
-            #     # print('edge',edge)
-            #     if np.random.rand()>p:
-            #         graph.remove_edge(edge[0],edge[1])
-
-
         ### dataset initialization
-        if 'nobfs' in args.note:
-            print('nobfs')
-            dataset = Graph_sequence_sampler_pytorch_nobfs(graphs_train, max_num_node=args.max_num_node)
-            args.max_prev_node = args.max_num_node-1
-        if 'barabasi_noise' in args.graph_type:
-            print('barabasi_noise')
-            dataset = Graph_sequence_sampler_pytorch_canonical(graphs_train,max_prev_node=args.max_prev_node)
-            args.max_prev_node = args.max_num_node - 1
-        else:
-            print(args.max_prev_node)
-            dataset = Graph_sequence_sampler_pytorch(graphs_train, max_prev_node=args.max_prev_node, max_num_node=args.max_num_node, use_classes=args.conditional, iteration=args.max_prev_node_iter)
-            dataset_test = Graph_sequence_sampler_pytorch(graphs_test, max_prev_node=args.max_prev_node, max_num_node=args.max_num_node, use_classes=args.conditional, iteration=args.max_prev_node_iter)
-            if args.max_prev_node is None:
-                args.max_prev_node = dataset.max_prev_node
-        sample_strategy = torch.utils.data.sampler.WeightedRandomSampler([1.0 / len(dataset) for i in range(len(dataset))],
-                                                                        num_samples=args.batch_size*args.batch_ratio, replacement=True)
-        sample_strategy_test = torch.utils.data.sampler.WeightedRandomSampler([1.0 / len(dataset_test) for i in range(len(dataset_test))],
-                                                                        num_samples=args.test_batch_size, replacement=True)
-        sample_strategy_test = torch.utils.data.sampler.SequentialSampler(dataset_test)
+        dataset = Graph_sequence_sampler_pytorch(graphs_train, max_prev_node=args.max_prev_node,
+                                                 max_num_node=args.max_num_node, use_classes=args.conditional,
+                                                 iteration=args.max_prev_node_iter)
+        dataset_test = Graph_sequence_sampler_pytorch(graphs_test, max_prev_node=args.max_prev_node,
+                                                      max_num_node=args.max_num_node, use_classes=args.conditional,
+                                                      iteration=args.max_prev_node_iter)
+        if args.max_prev_node is None:
+            args.max_prev_node = dataset.max_prev_node
+        sample_strategy = torch.utils.data.sampler.WeightedRandomSampler(
+            [1.0 / len(dataset) for i in range(len(dataset))],
+            num_samples=args.batch_size * args.batch_ratio, replacement=True)
+        sample_strategy_test = torch.utils.data.sampler.WeightedRandomSampler(
+            [1.0 / len(dataset_test) for i in range(len(dataset_test))],
+            num_samples=args.test_batch_size, replacement=True)
+        #sample_strategy_test = torch.utils.data.sampler.SequentialSampler(dataset_test)
         dataset_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, num_workers=args.num_workers,
-                                                   sampler=sample_strategy)
-        dataset_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=args.test_batch_size, num_workers=args.num_workers,
-                                                   sampler=sample_strategy_test)
+                                                     sampler=sample_strategy)
+        dataset_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=args.test_batch_size,
+                                                          num_workers=args.num_workers,
+                                                          sampler=sample_strategy_test)
 
     ### model initialization
-    ## Graph RNN VAE model
-    # lstm = LSTM_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_lstm,
-    #                   hidden_size=args.hidden_size, num_layers=args.num_layers).to(device)
-
     # check whether we're using conditional input
     if args.conditional:
-        graph_embedding_size = 2
+        graph_embedding_size = args.graph_embedding_size
     else:
         graph_embedding_size = None
 
-    if 'GraphRNN_VAE_conditional' in args.note:
-        rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
-                        hidden_size=args.hidden_size_rnn, num_layers=args.num_layers, has_input=True,
-                        has_output=False).to(device)
-        output = MLP_VAE_conditional_plain(h_size=args.hidden_size_rnn, embedding_size=args.embedding_size_output, y_size=args.max_prev_node).to(device)
-    elif 'GraphRNN_MLP' in args.note:
-        rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
-                        hidden_size=args.hidden_size_rnn, num_layers=args.num_layers, has_input=True,
-                        has_output=False).to(device)
-        output = MLP_plain(h_size=args.hidden_size_rnn, embedding_size=args.embedding_size_output, y_size=args.max_prev_node).to(device)
-    elif 'GraphRNN_RNN' in args.note:
-        rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
-                        hidden_size=args.hidden_size_rnn, num_layers=args.num_layers, graph_embedding_size=graph_embedding_size, has_input=False,
-                        has_output=True, is_encoder=args.train_encoder, output_size=args.hidden_size_rnn_output).to(device)
-        output = GRU_plain(input_size=1, embedding_size=args.embedding_size_rnn_output,
-                           hidden_size=args.hidden_size_rnn_output, num_layers=args.num_layers, has_input=True,
-                           has_output=True, output_size=1).to(device)
-    else:
-        raise RuntimeError
-
+    rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
+                    hidden_size=args.hidden_size_rnn, num_layers=args.num_layers,
+                    graph_embedding_size=graph_embedding_size, has_input=False,
+                    has_output=True, is_encoder=args.train_encoder, output_size=args.hidden_size_rnn_output).to(device)
+    output = GRU_plain(input_size=1, embedding_size=args.embedding_size_rnn_output,
+                       hidden_size=args.hidden_size_rnn_output, num_layers=args.num_layers, has_input=True,
+                       has_output=True, output_size=1).to(device)
 
     ### start training
     if args.train_encoder:
@@ -219,27 +178,21 @@ if __name__ == '__main__':
         if args.train_encoder:
             test_rnn_encoder(args, rnn, dataset_loader_test)
 
-
     if args.make_graph_list:
         if not args.train:
             # if we didn't just train, load something instead
-            fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
-            rnn.load_state_dict(torch.load(fname,map_location='cpu'))
-            fname = args.model_save_path + fns.fname + 'output_' + str(args.load_epoch) + '_cond=' + str(args.conditional) + '.dat'
-            output.load_state_dict(torch.load(fname,map_location='cpu'))
-
+            fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '_cond=' + str(
+                args.conditional) + '.dat'
+            rnn.load_state_dict(torch.load(fname, map_location='cpu'))
+            fname = args.model_save_path + fns.fname + 'output_' + str(args.load_epoch) + '_cond=' + str(
+                args.conditional) + '.dat'
+            output.load_state_dict(torch.load(fname, map_location='cpu'))
 
         # how many to generate
         list_length = 1000
         # desired Z value (if you're using conditonal
-        Z = torch.Tensor([[1, 0]]*list_length) if args.conditional else None
+        Z = torch.Tensor([[1, 0]] * list_length) if args.conditional else None
         # Generate a graph list
-        G = graph_gen(args, rnn,output,Z,args.max_prev_node,args.max_num_node,list_length)
+        G = graph_gen(args, rnn, output, Z, args.max_prev_node, args.max_num_node, list_length)
         # save the graphs
         save_graph_list(G, fns.fname_test2)
-
-    ### graph completion
-    # train_graph_completion(args,dataset_loader,rnn,output)
-
-    ### nll evaluation
-    # train_nll(args, dataset_loader, dataset_loader, rnn, output, max_iter = 200, graph_validate_len=graph_validate_len,graph_test_len=graph_test_len)
