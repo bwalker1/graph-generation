@@ -432,11 +432,7 @@ def train_rnn_encoder_epoch(epoch, args, rnn, data_loader,
         # reverse y_reshape, so that their lengths are sorted, add dimension
         idx = [i for i in range(y_reshape.size(0) - 1, -1, -1)]
         idx = torch.LongTensor(idx)
-        y_reshape = y_reshape.index_select(0, idx)
-        y_reshape = y_reshape.view(y_reshape.size(0), y_reshape.size(1), 1)
 
-        output_x = torch.cat((torch.ones(y_reshape.size(0), 1, 1), y_reshape[:, 0:-1, 0:1]), dim=1)
-        output_y = y_reshape
         # batch size for output module: sum(y_len)
         output_y_len = []
         output_y_len_bin = np.bincount(np.array(y_len))
@@ -447,12 +443,6 @@ def train_rnn_encoder_epoch(epoch, args, rnn, data_loader,
         # pack into variable
         x = Variable(x).to(device)
         y = Variable(y).to(device)
-        output_x = Variable(output_x).to(device)
-        output_y = Variable(output_y).to(device)
-        # print(output_y_len)
-        # print('len',len(output_y_len))
-        # print('y',y.size())
-        # print('output_y',output_y.size())
 
         # if using ground truth to train
         Z_pred = rnn(x, pack=False, input_len=y_len)

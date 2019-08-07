@@ -4,6 +4,9 @@ class Args():
     def __init__(self):
         # control what main.py does
         self.train = True
+        # set to either encoder, decoder, or autoencoder
+        self.mode = "autoencoder"
+
         self.make_graph_list = False
 
         # whether we use tensorboard logging
@@ -21,7 +24,7 @@ class Args():
 
         ### Whether we are doing conditional generation
         self.conditional = True
-        self.graph_embedding_size = 5
+        self.graph_embedding_size = 2
 
         ## for comparison, removing the BFS compoenent
         # self.note = 'GraphRNN_MLP_nobfs'
@@ -122,9 +125,6 @@ class Args():
         # output graph list options
         #self.output_set_length=1000
         self.output_name="graph_list.dat"
-
-        # whether we should train an encoder RNN on the given set
-        self.train_encoder = False
 
 
 class filenames():

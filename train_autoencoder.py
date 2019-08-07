@@ -29,19 +29,51 @@ import create_graphs
 from graph_gen import *
 
 
-def train_autoencoder_epoch(epoch, args, rnn, output, data_loader,
-                    optimizer_rnn, optimizer_output,
-                    scheduler_rnn, scheduler_output):
+def test_autoencoder(args, rnn, data_loader):
+    rnn.eval()
+
+    arr = []
+
+    for batch_idx, data in enumerate(data_loader):
+        x_unsorted = data['x'].float()
+        y_unsorted = data['y'].float()
+        Z_unsorted = data['Z'].float()
+
+        y_len_unsorted = data['len']
+        y_len_max = max(y_len_unsorted)
+        x_unsorted = x_unsorted[:, 0:y_len_max, :]
+        y_unsorted = y_unsorted[:, 0:y_len_max, :]
+
+        # sort input
+        y_len, sort_index = torch.sort(y_len_unsorted, 0, descending=True)
+        y_len = y_len.numpy().tolist()
+        x = torch.index_select(x_unsorted, 0, sort_index)
+        Z = torch.index_select(Z_unsorted, 0, sort_index)
+        x = Variable(x).to(device)
+
+        # feed the input graphs into the encoder to get the decoded sequence
+        Z_pred = rnn(x, pack=False, input_len=y_len, only_encode=True)
+        Z_pred = Z_pred.detach().cpu().numpy()
+        N = Z_pred.shape[0]
+        print("True\tPredicted")
+        for i in range(N):
+            print(Z[i,:],"\t",Z_pred[i,:])
+
+
+    return arr
+
+
+
+
+def train_autoencoder_epoch(epoch, args, rnn, data_loader,
+                    optimizer_rnn,  scheduler_rnn):
     # set up to work with or without cuda
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     rnn.train()
-    output.train()
     loss_sum = 0
 
-    use_Z = rnn.use_Z
     for batch_idx, data in enumerate(data_loader):
         rnn.zero_grad()
-        output.zero_grad()
         x_unsorted = data['x'].float()
         y_unsorted = data['y'].float()
 
@@ -79,62 +111,38 @@ def train_autoencoder_epoch(epoch, args, rnn, output, data_loader,
                 [min(i, y.size(2))] * count_temp)  # put them in output_y_len; max value should not exceed y.size(2)
         # pack into variable
         x = Variable(x).to(device)
-        y = Variable(y).to(device)
+        #y = Variable(y).to(device)
         output_x = Variable(output_x).to(device)
+
+
+        # feed the input graphs into the encoder to get the decoded sequence
+        y_pred = rnn(x, output_x=output_x, pack=False, input_len=y_len, input_len_output=output_y_len)
         output_y = Variable(output_y).to(device)
-        # print(output_y_len)
-        # print('len',len(output_y_len))
-        # print('y',y.size())
-        # print('output_y',output_y.size())
 
-        if use_Z:
-            Z = data['Z'].float()
-            Z = Variable(Z).to(device)
-        else:
-            rnn.hidden = rnn.init_hidden(batch_size=x_unsorted.size(0))
-            Z = None
-
-        # if using ground truth to train
-        h = rnn(x, Z, pack=True, input_len=y_len)
-        h = pack_padded_sequence(h, y_len, batch_first=True).data  # get packed hidden vector
-        # reverse h
-        idx = [i for i in range(h.size(0) - 1, -1, -1)]
-        idx = Variable(torch.LongTensor(idx)).to(device)
-        h = h.index_select(0, idx)
-        hidden_null = Variable(torch.zeros(args.num_layers - 1, h.size(0), h.size(1))).to(device)
-        output.hidden = torch.cat((h.view(1, h.size(0), h.size(1)), hidden_null),
-                                  dim=0)  # num_layers, batch_size, hidden_size
-        y_pred = output(output_x, pack=True, input_len=output_y_len)
-        y_pred = F.sigmoid(y_pred)
         # clean
         y_pred = pack_padded_sequence(y_pred, output_y_len, batch_first=True)
         y_pred = pad_packed_sequence(y_pred, batch_first=True)[0]
+
         output_y = pack_padded_sequence(output_y, output_y_len, batch_first=True)
         output_y = pad_packed_sequence(output_y, batch_first=True)[0]
         # use cross entropy loss
         loss = binary_cross_entropy_weight(y_pred, output_y)
         loss.backward()
+        feature_dim = y.size(1) * y.size(2)
+        loss_sum += loss.item() * feature_dim
         # update deterministic and lstm
-        optimizer_output.step()
         optimizer_rnn.step()
-        scheduler_output.step()
         scheduler_rnn.step()
 
         if epoch % args.epochs_log == 0 and batch_idx == 0:  # only output first batch's statistics
             print('Epoch: {}/{}, train loss: {:.6f}, graph type: {}, num_layer: {}, hidden: {}'.format(
                 epoch, args.epochs, loss.item(), args.graph_type, args.num_layers, args.hidden_size_rnn))
-
-        # logging
-        if args.use_tensorboard:
-            log_value('loss_' + args.fname, loss.data[0], epoch * args.batch_ratio + batch_idx)
-        feature_dim = y.size(1) * y.size(2)
-        loss_sum += loss.item() * feature_dim
     return loss_sum / (batch_idx + 1)
 
 
 
 # train function for LSTM + VAE
-def train_autoencoder(args, dataset_train, rnn, Z_list=None):
+def train_autoencoder(args, dataset_train, rnn):
     # get the filenames that we'll need for saving
     fns = filenames(args)
     # check if load existing model
@@ -145,7 +153,6 @@ def train_autoencoder(args, dataset_train, rnn, Z_list=None):
         rnn.load_state_dict(torch.load(fname, map_location='cpu'))
         fname = args.model_save_path + fns.fname + 'output_' + str(args.load_epoch) + '_cond=' + str(
             args.conditional) + '.dat'
-        output.load_state_dict(torch.load(fname, map_location='cpu'))
 
         args.lr = 0.00001
         epoch = args.load_epoch
@@ -162,30 +169,13 @@ def train_autoencoder(args, dataset_train, rnn, Z_list=None):
     time_all = np.zeros(args.epochs)
     while epoch <= args.epochs:
         time_start = tm.time()
+        # train_autoencoder_epoch(epoch, args, rnn, data_loader,
+        #                     optimizer_rnn,  scheduler_rnn):
         train_autoencoder_epoch(epoch, args, rnn, dataset_train,
-                                optimizer_rnn,scheduler_rnn)
+                                optimizer_rnn, scheduler_rnn)
         time_end = tm.time()
         time_all[epoch - 1] = time_end - time_start
-        # test
-        # TODO: implement testing as we go
-        # if epoch % args.epochs_test == 0 and epoch >= args.epochs_test_start:
-        #     for sample_time in range(1, 4):
-        #         G_pred = []
-        #         while len(G_pred) < args.test_total_size:
-        #
-        #             if 'GraphRNN_RNN' in args.note:
-        #                 G_pred_step = test_rnn_epoch(epoch, args, rnn, output, test_batch_size=args.test_batch_size,
-        #                                             Z_list=Z_list)
-        #                 pass
-        #             else:
-        #                 raise RuntimeError
-        #             #G_pred.extend(G_pred_step)
-        #         # save graphs
-        #         fname = args.graph_save_path + fns.fname_pred + str(epoch) + '_' + str(sample_time) + '.dat'
-        #         save_graph_list(G_pred, fname)
-        #         if 'GraphRNN_RNN' in args.note:
-        #             break
-        #     print('test done, graphs saved')
+        # possibly insert testing here
 
         # save model checkpoint
         if args.save:

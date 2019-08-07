@@ -9,11 +9,14 @@ import warnings
 warnings.warn = warn
 
 from train import *
+from train_autoencoder import *
 from args import *
 from graph_gen import *
 import sys
 import argparse
 import collections
+
+from autoencoder import *
 
 if __name__ == '__main__':
     # set up to work with or without cuda
@@ -153,6 +156,8 @@ if __name__ == '__main__':
         dataset_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=args.test_batch_size,
                                                           num_workers=args.num_workers,
                                                           sampler=sample_strategy_test)
+    else:
+        raise RuntimeError
 
     ### model initialization
     # check whether we're using conditional input
@@ -161,38 +166,57 @@ if __name__ == '__main__':
     else:
         graph_embedding_size = None
 
-    rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
-                    hidden_size=args.hidden_size_rnn, num_layers=args.num_layers,
-                    graph_embedding_size=graph_embedding_size, has_input=False,
-                    has_output=True, is_encoder=args.train_encoder, output_size=args.hidden_size_rnn_output).to(device)
-    output = GRU_plain(input_size=1, embedding_size=args.embedding_size_rnn_output,
-                       hidden_size=args.hidden_size_rnn_output, num_layers=args.num_layers, has_input=True,
-                       has_output=True, output_size=1).to(device)
+    if args.mode == "autoencoder":
+        #(self, input_size, embedding_size, hidden_size, num_layers, graph_embedding_size, output_size=None, hidden_size_rnn_output=None, embedding_size_rnn_output=None)
+        rnn = GRUAutoencoder(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
+                             hidden_size=args.hidden_size_rnn, num_layers=args.num_layers,
+                             output_size=args.hidden_size_rnn_output,
+                             graph_embedding_size=graph_embedding_size,hidden_size_rnn_output=args.hidden_size_rnn_output,
+                             embedding_size_rnn_output=args.embedding_size_rnn_output).to(device)
+    else:
+        rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
+                        hidden_size=args.hidden_size_rnn, num_layers=args.num_layers,
+                        graph_embedding_size=graph_embedding_size, has_input=False,
+                        has_output=True, is_encoder=args.train_encoder, output_size=args.hidden_size_rnn_output).to(device)
+        if args.mode == "decoder":
+            output = GRU_plain(input_size=1, embedding_size=args.embedding_size_rnn_output,
+                               hidden_size=args.hidden_size_rnn_output, num_layers=args.num_layers, has_input=True,
+                               has_output=True, output_size=1).to(device)
 
     ### start training
-    if args.train_encoder:
-        train_encoder(args, dataset_loader, rnn, Z_list)
-    elif args.train:
-        train(args, dataset_loader, rnn, output, Z_list)
+    if args.train:
+        if args.mode == "decoder":
+            train(args, dataset_loader, rnn, output, Z_list)
+        elif args.mode == "encoder":
+            train_encoder(args, dataset_loader, rnn, Z_list)
+        elif args.mode == "autoencoder":
+            train_autoencoder(args, dataset_loader, rnn)
+
+    # test phase
     if True:
-        if args.train_encoder:
+        if args.mode == "encoder":
             test_rnn_encoder(args, rnn, dataset_loader_test)
 
     if args.make_graph_list:
-        if not args.train:
-            # if we didn't just train, load something instead
-            fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '_cond=' + str(
-                args.conditional) + '.dat'
-            rnn.load_state_dict(torch.load(fname, map_location='cpu'))
-            fname = args.model_save_path + fns.fname + 'output_' + str(args.load_epoch) + '_cond=' + str(
-                args.conditional) + '.dat'
-            output.load_state_dict(torch.load(fname, map_location='cpu'))
+        if args.mode == "encoder":
+            if not args.train:
+                # if we didn't just train, load something instead
+                fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '_cond=' + str(
+                    args.conditional) + '.dat'
+                rnn.load_state_dict(torch.load(fname, map_location='cpu'))
+                fname = args.model_save_path + fns.fname + 'output_' + str(args.load_epoch) + '_cond=' + str(
+                    args.conditional) + '.dat'
+                output.load_state_dict(torch.load(fname, map_location='cpu'))
 
-        # how many to generate
-        list_length = 1000
-        # desired Z value (if you're using conditonal
-        Z = torch.Tensor([[1, 0]] * list_length) if args.conditional else None
-        # Generate a graph list
-        G = graph_gen(args, rnn, output, Z, args.max_prev_node, args.max_num_node, list_length)
-        # save the graphs
-        save_graph_list(G, fns.fname_test2)
+            # how many to generate
+            list_length = 1000
+            # desired Z value (if you're using conditonal
+            Z = torch.Tensor([[1, 0]] * list_length) if args.conditional else None
+            # Generate a graph list
+            G = graph_gen(args, rnn, output, Z, args.max_prev_node, args.max_num_node, list_length)
+            # save the graphs
+            save_graph_list(G, fns.fname_test2)
+        elif args.mode == "autoencoder":
+            # use our autoencoder to embed the test set
+            # TODO: implement this
+            test_autoencoder(args, rnn, dataset_loader_test)

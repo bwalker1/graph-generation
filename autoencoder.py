@@ -24,8 +24,8 @@ from model import *
 # This class represents an autoencoder that takes in a graph sequence and
 # produces a new graph sequence from the same distribution of graphs (hopefully)
 class GRUAutoencoder(nn.Module):
-    def __init__(self, input_size, embedding_size, hidden_size, num_layers, graph_embedding_size,
-                 output_size=None, hidden_size_rnn_output=None, embedding_size_rnn_output=None):
+    def __init__(self, input_size, embedding_size, hidden_size, num_layers, graph_embedding_size, output_size,
+                 hidden_size_rnn_output=None, embedding_size_rnn_output=None):
         super(GRUAutoencoder, self).__init__()
         self.num_layers = num_layers
         self.hidden_size = hidden_size
@@ -36,8 +36,9 @@ class GRUAutoencoder(nn.Module):
 
         # stage 1: encoder
 
-        self.encoder_rnn = GRU_plain(input_size, embedding_size, hidden_size, num_layers, has_input=False,
-                                     has_output=True, is_encoder=True)
+        self.encoder_rnn = GRU_plain(input_size, embedding_size, hidden_size, num_layers,
+                                     graph_embedding_size=graph_embedding_size, has_input=False,
+                                     has_output=True, output_size=output_size, is_encoder=True)
 
         # set up network to decode latent to new hidden state
         self.hidden_net = nn.Linear(graph_embedding_size, self.num_layers * self.hidden_size)
@@ -53,11 +54,12 @@ class GRUAutoencoder(nn.Module):
     def init_hidden(self, batch_size):
         pass
 
-    def forward(self, x, output_x=False, pack=False, input_len=None, input_len_output=None, only_encode=False, decode_Z=None):
+    def forward(self, x, output_x=None, pack=False, input_len=None, input_len_output=None, only_encode=False, decode_Z=None):
         # compute Z
         if decode_Z is not None:
             Z = decode_Z
         else:
+            self.encoder_rnn.hidden = self.encoder_rnn.init_hidden(batch_size=x.size(0))
             Z = self.encoder_rnn(x, pack=False, input_len=input_len)
 
         if only_encode:
@@ -65,7 +67,7 @@ class GRUAutoencoder(nn.Module):
         else:
             # create a decoded network
             h = self.decoder_rnn(x, Z, pack=True, input_len=input_len)
-            h = pack_padded_sequence(h, y_len, batch_first=True).data  # get packed hidden vector
+            h = pack_padded_sequence(h, input_len, batch_first=True).data  # get packed hidden vector
             # reverse h...TODO: understand why
             idx = [i for i in range(h.size(0) - 1, -1, -1)]
             idx = Variable(torch.LongTensor(idx)).to(device)
@@ -73,7 +75,14 @@ class GRUAutoencoder(nn.Module):
             hidden_null = Variable(torch.zeros(self.num_layers - 1, h.size(0), h.size(1))).to(device)
             self.decoder_output.hidden = torch.cat((h.view(1, h.size(0), h.size(1)), hidden_null),
                                                    dim=0)  # num_layers, batch_size, hidden_size
-            y_pred = self.decoder_output(output_x, pack=True, input_len=input_len_output)
+
+            if output_x is not None:
+                # we were given a ground truth sequence to predict off of
+                y_pred = self.decoder_output(output_x, pack=True, input_len=input_len_output)
+            else:
+                # we weren't given ground truth for the output, so we have to feed back in as we predict
+                raise NotImplementedError
+
             y_pred = F.sigmoid(y_pred)
 
             return y_pred
