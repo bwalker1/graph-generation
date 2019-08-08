@@ -16,6 +16,8 @@ import sys
 import argparse
 import collections
 
+import matplotlib.pyplot as plt
+
 from autoencoder import *
 
 if __name__ == '__main__':
@@ -219,4 +221,12 @@ if __name__ == '__main__':
         elif args.mode == "autoencoder":
             # use our autoencoder to embed the test set
             # TODO: implement this
-            test_autoencoder(args, rnn, dataset_loader_test)
+            out = test_autoencoder(args, rnn, dataset_loader_test)
+
+            #print(out)
+
+            plt.switch_backend("agg")
+            plt.scatter(out[0][:,0], out[0][:,1], c="red")
+            plt.scatter(out[1][:,0], out[1][:,1], c="blue")
+            plt.savefig("figures/latent_encoding.png", dpi=300)
+            plt.close()

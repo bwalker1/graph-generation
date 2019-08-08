@@ -57,7 +57,17 @@ def test_autoencoder(args, rnn, data_loader):
         N = Z_pred.shape[0]
         print("True\tPredicted")
         for i in range(N):
-            print(Z[i,:],"\t",Z_pred[i,:])
+            print(Z[i,:], "\t", Z_pred[i,:])
+
+        # right now there will be issues if you something other than 2 classes labeled
+        #print(Z.numpy()[:,1] == 1)
+        labels = Z.numpy()[:,1] == 0
+        #print(Z_pred[labels,:])
+
+        class0 = Z_pred[labels,:]
+        class1 = Z_pred[np.logical_not(labels),:]
+
+        arr = [class0, class1]
 
 
     return arr
