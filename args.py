@@ -74,7 +74,7 @@ class Args():
         self.embedding_size_output = int(64/self.parameter_shrink) # the embedding size for output (VAE/MLP)
 
         self.batch_size = 32 # normal: 32, and the rest should be changed accordingly
-        self.test_batch_size = 32
+        self.test_batch_size = 128
         self.test_total_size = 1
         self.num_layers = 4
 

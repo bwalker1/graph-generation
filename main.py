@@ -86,7 +86,7 @@ if __name__ == '__main__':
         # split datasets
         # random.seed(123)
 
-        # shuffle(graphs)
+        shuffle(graphs)
         graphs_len = len(graphs)
         # graphs_test = graphs[int(0.8 * graphs_len):]
         graphs_test = graphs[400:500] + graphs[900:1000]
@@ -220,13 +220,14 @@ if __name__ == '__main__':
             save_graph_list(G, fns.fname_test2)
         elif args.mode == "autoencoder":
             # use our autoencoder to embed the test set
-            # TODO: implement this
             out = test_autoencoder(args, rnn, dataset_loader_test)
 
-            #print(out)
+            print(out)
 
             plt.switch_backend("agg")
-            plt.scatter(out[0][:,0], out[0][:,1], c="red")
-            plt.scatter(out[1][:,0], out[1][:,1], c="blue")
+            for list in out:
+                plt.scatter(list[:, 0], list[:, 1])
+            #plt.scatter(out[0][:,0], out[0][:,1])
+            #plt.scatter(out[1][:,0], out[1][:,1])
             plt.savefig("figures/latent_encoding.png", dpi=300)
             plt.close()
