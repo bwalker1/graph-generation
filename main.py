@@ -227,7 +227,5 @@ if __name__ == '__main__':
             plt.switch_backend("agg")
             for list in out:
                 plt.scatter(list[:, 0], list[:, 1])
-            #plt.scatter(out[0][:,0], out[0][:,1])
-            #plt.scatter(out[1][:,0], out[1][:,1])
             plt.savefig("figures/latent_encoding.png", dpi=300)
             plt.close()

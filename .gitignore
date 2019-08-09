@@ -27,3 +27,5 @@ timing/
 __pycache__
 **/__pycache__
 .DS_Store
+
+kdd_datasets/
