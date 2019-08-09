@@ -272,4 +272,12 @@ def create(args):
         graphs = graphs[0:200]
         args.max_prev_node = 15
 
+    # kdd graphs
+    elif args.graph_type == "mutag":
+        G = load_kdd_graph("mutag")
+        shuffle(G)
+
+        args.max_prev_node = 10
+        return G
+
     return graphs

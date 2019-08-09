@@ -16,7 +16,7 @@ import os
 import time
 from model import *
 from utils import *
-
+import glob
 
 
 
@@ -129,6 +129,37 @@ def Graph_load(dataset = 'cora'):
     G = nx.from_dict_of_lists(graph)
     adj = nx.adjacency_matrix(G)
     return adj, features, G
+
+
+def onehot(k,n):
+    v = np.array([0,]*n)
+    v[k]=1
+    return v
+
+def load_kdd_graph(dataset):
+    G = []
+
+    # load the label data
+    labelsFile = "kdd_datasets/"+dataset+".Labels"
+    lines = [line.rstrip('\n').split(' ') for line in open(labelsFile)]
+    labels = {line[0]: int(line[1]) for line in lines}
+
+    # now we need to map the labels to one-hot encodings
+    labels_set = {v for k, v in labels.items()}
+    num_labels = len(labels_set)
+    labels_map = {v: k for k, v in enumerate(labels_set)}
+
+    # load the actual graphs
+    for file in glob.iglob("kdd_datasets/"+dataset+"/*.gexf"):
+        # load the graph from this file
+        # TODO: concerns about system compatibility cause glob is being really weird here
+        cur_graph = file.split('\\')[-1]
+        label = labels[cur_graph]
+        g = nx.read_gexf(file)
+        g.graph['Z'] = onehot(labels_map[label], num_labels)
+        G.append(g)
+
+    return G
 
 
 ######### code test ########

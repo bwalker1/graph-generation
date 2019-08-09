@@ -88,11 +88,13 @@ if __name__ == '__main__':
 
         shuffle(graphs)
         graphs_len = len(graphs)
-        # graphs_test = graphs[int(0.8 * graphs_len):]
-        graphs_test = graphs[400:500] + graphs[900:1000]
-        graphs_train = graphs[0:400] + graphs[500:900]
-        shuffle(graphs_train)
+        graphs_test = graphs[int(0.8 * graphs_len):]
+        graphs_train = graphs[0:(int(0.8 * graphs_len)-1)]
         graphs_validate = graphs[0:int(0.2 * graphs_len)]
+
+        # for the graph classification task:
+        #graphs_train = graphs
+        #graphs_test = graphs
 
         if args.conditional:
             Z_list = [G.graph['Z'] for G in graphs]
@@ -225,7 +227,9 @@ if __name__ == '__main__':
             print(out)
 
             plt.switch_backend("agg")
-            for list in out:
-                plt.scatter(list[:, 0], list[:, 1])
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+            for label, list in out.items():
+                ax.scatter(list[:, 0], list[:, 1], list[:, 2])
             plt.savefig("figures/latent_encoding.png", dpi=300)
             plt.close()

@@ -27,12 +27,12 @@ from data import *
 from args import *
 import create_graphs
 from graph_gen import *
-
+from collections import defaultdict
 
 def test_autoencoder(args, rnn, data_loader):
     rnn.eval()
 
-    arr = []
+    arr = defaultdict(list)
 
     for batch_idx, data in enumerate(data_loader):
         x_unsorted = data['x'].float()
@@ -64,10 +64,10 @@ def test_autoencoder(args, rnn, data_loader):
         class1 = Z_pred[labels == 1, :]
 
         for i in range(Nd):
-            arr.append(Z_pred[labels == i])
+            arr[i].extend(Z_pred[labels == i])
 
 
-    return arr
+    return {k: np.array(v) for k, v in arr.items()}
 
 
 
