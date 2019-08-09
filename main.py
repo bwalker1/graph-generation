@@ -141,7 +141,7 @@ if __name__ == '__main__':
         dataset = Graph_sequence_sampler_pytorch(graphs_train, max_prev_node=args.max_prev_node,
                                                  max_num_node=args.max_num_node, use_classes=args.conditional,
                                                  iteration=args.max_prev_node_iter)
-        dataset_test = Graph_sequence_sampler_pytorch(graphs_test, max_prev_node=args.max_prev_node,
+        dataset_test = Graph_sequence_sampler_pytorch(graphs_test, max_prev_node=dataset.max_prev_node,
                                                       max_num_node=args.max_num_node, use_classes=args.conditional,
                                                       iteration=args.max_prev_node_iter)
         if args.max_prev_node is None:
@@ -151,8 +151,8 @@ if __name__ == '__main__':
             num_samples=args.batch_size * args.batch_ratio, replacement=True)
         sample_strategy_test = torch.utils.data.sampler.WeightedRandomSampler(
             [1.0 / len(dataset_test) for i in range(len(dataset_test))],
-            num_samples=args.test_batch_size, replacement=True)
-        #sample_strategy_test = torch.utils.data.sampler.SequentialSampler(dataset_test)
+            num_samples=len(dataset_test), replacement=True)
+        sample_strategy_test = torch.utils.data.sampler.SequentialSampler(dataset_test)
         dataset_loader = torch.utils.data.DataLoader(dataset, batch_size=args.batch_size, num_workers=args.num_workers,
                                                      sampler=sample_strategy)
         dataset_loader_test = torch.utils.data.DataLoader(dataset_test, batch_size=args.test_batch_size,
