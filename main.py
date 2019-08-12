@@ -181,7 +181,7 @@ if __name__ == '__main__':
         rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
                         hidden_size=args.hidden_size_rnn, num_layers=args.num_layers,
                         graph_embedding_size=graph_embedding_size, has_input=False,
-                        has_output=True, is_encoder=args.train_encoder, output_size=args.hidden_size_rnn_output).to(device)
+                        has_output=True, is_encoder=(args.mode == "encoder"), output_size=args.hidden_size_rnn_output).to(device)
         if args.mode == "decoder":
             output = GRU_plain(input_size=1, embedding_size=args.embedding_size_rnn_output,
                                hidden_size=args.hidden_size_rnn_output, num_layers=args.num_layers, has_input=True,
@@ -200,9 +200,24 @@ if __name__ == '__main__':
     if True:
         if args.mode == "encoder":
             test_rnn_encoder(args, rnn, dataset_loader_test)
+        elif args.mode == "autoencoder":
+            # use our autoencoder to embed the test set
+            out = test_autoencoder(args, rnn, dataset_loader_test)
 
+            print(out)
+
+            plt.switch_backend("agg")
+            for label, list in out.items():
+                plt.scatter(list[:, 0], list[:, 1])
+            plt.savefig("figures/latent_encoding.png", dpi=300)
+            plt.close()
+
+
+
+    # generating graphs if we have a generator network
+    # TODO: allow for generation using a trained autoencoder
     if args.make_graph_list:
-        if args.mode == "encoder":
+        if args.mode == "decoder":
             if not args.train:
                 # if we didn't just train, load something instead
                 fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '_cond=' + str(
@@ -220,16 +235,3 @@ if __name__ == '__main__':
             G = graph_gen(args, rnn, output, Z, args.max_prev_node, args.max_num_node, list_length)
             # save the graphs
             save_graph_list(G, fns.fname_test2)
-        elif args.mode == "autoencoder":
-            # use our autoencoder to embed the test set
-            out = test_autoencoder(args, rnn, dataset_loader_test)
-
-            print(out)
-
-            plt.switch_backend("agg")
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-            for label, list in out.items():
-                ax.scatter(list[:, 0], list[:, 1], list[:, 2])
-            plt.savefig("figures/latent_encoding.png", dpi=300)
-            plt.close()

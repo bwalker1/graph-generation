@@ -233,44 +233,44 @@ def create(args):
         args.max_prev_node = 99
 
     # real graphs
-    elif args.graph_type == 'enzymes':
-        graphs= Graph_load_batch(min_num_nodes=10, name='ENZYMES')
-        args.max_prev_node = 25
-    elif args.graph_type == 'enzymes_small':
-        graphs_raw = Graph_load_batch(min_num_nodes=10, name='ENZYMES')
-        graphs = []
-        for G in graphs_raw:
-            if G.number_of_nodes()<=20:
-                graphs.append(G)
-        args.max_prev_node = 15
-    elif args.graph_type == 'protein':
-        graphs = Graph_load_batch(min_num_nodes=20, name='PROTEINS_full')
-        args.max_prev_node = 80
-    elif args.graph_type == 'DD':
-        graphs = Graph_load_batch(min_num_nodes=100, max_num_nodes=500, name='DD',node_attributes=False,graph_labels=True)
-        args.max_prev_node = 230
-    elif args.graph_type == 'citeseer':
-        _, _, G = Graph_load(dataset='citeseer')
-        G = max(nx.connected_component_subgraphs(G), key=len)
-        G = nx.convert_node_labels_to_integers(G)
-        graphs = []
-        for i in range(G.number_of_nodes()):
-            G_ego = nx.ego_graph(G, i, radius=3)
-            if G_ego.number_of_nodes() >= 50 and (G_ego.number_of_nodes() <= 400):
-                graphs.append(G_ego)
-        args.max_prev_node = 250
-    elif args.graph_type == 'citeseer_small':
-        _, _, G = Graph_load(dataset='citeseer')
-        G = max(nx.connected_component_subgraphs(G), key=len)
-        G = nx.convert_node_labels_to_integers(G)
-        graphs = []
-        for i in range(G.number_of_nodes()):
-            G_ego = nx.ego_graph(G, i, radius=1)
-            if (G_ego.number_of_nodes() >= 4) and (G_ego.number_of_nodes() <= 20):
-                graphs.append(G_ego)
-        shuffle(graphs)
-        graphs = graphs[0:200]
-        args.max_prev_node = 15
+    # elif args.graph_type == 'enzymes':
+    #     graphs= Graph_load_batch(min_num_nodes=10, name='ENZYMES')
+    #     args.max_prev_node = 25
+    # elif args.graph_type == 'enzymes_small':
+    #     graphs_raw = Graph_load_batch(min_num_nodes=10, name='ENZYMES')
+    #     graphs = []
+    #     for G in graphs_raw:
+    #         if G.number_of_nodes()<=20:
+    #             graphs.append(G)
+    #     args.max_prev_node = 15
+    # elif args.graph_type == 'protein':
+    #     graphs = Graph_load_batch(min_num_nodes=20, name='PROTEINS_full')
+    #     args.max_prev_node = 80
+    # elif args.graph_type == 'DD':
+    #     graphs = Graph_load_batch(min_num_nodes=100, max_num_nodes=500, name='DD',node_attributes=False,graph_labels=True)
+    #     args.max_prev_node = 230
+    # elif args.graph_type == 'citeseer':
+    #     _, _, G = Graph_load(dataset='citeseer')
+    #     G = max(nx.connected_component_subgraphs(G), key=len)
+    #     G = nx.convert_node_labels_to_integers(G)
+    #     graphs = []
+    #     for i in range(G.number_of_nodes()):
+    #         G_ego = nx.ego_graph(G, i, radius=3)
+    #         if G_ego.number_of_nodes() >= 50 and (G_ego.number_of_nodes() <= 400):
+    #             graphs.append(G_ego)
+    #     args.max_prev_node = 250
+    # elif args.graph_type == 'citeseer_small':
+    #     _, _, G = Graph_load(dataset='citeseer')
+    #     G = max(nx.connected_component_subgraphs(G), key=len)
+    #     G = nx.convert_node_labels_to_integers(G)
+    #     graphs = []
+    #     for i in range(G.number_of_nodes()):
+    #         G_ego = nx.ego_graph(G, i, radius=1)
+    #         if (G_ego.number_of_nodes() >= 4) and (G_ego.number_of_nodes() <= 20):
+    #             graphs.append(G_ego)
+    #     shuffle(graphs)
+    #     graphs = graphs[0:200]
+    #     args.max_prev_node = 15
 
     # kdd graphs
     elif args.graph_type == "mutag":
@@ -278,6 +278,13 @@ def create(args):
         shuffle(G)
 
         args.max_prev_node = 10
+        return G
+
+    elif args.graph_type == "proteins":
+        G = load_kdd_graph("proteins")
+        shuffle(G)
+
+        args.max_prev_node = 85
         return G
 
     return graphs

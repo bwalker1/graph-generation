@@ -24,7 +24,7 @@ class Args():
 
         ### Whether we are doing conditional generation
         self.conditional = True
-        self.graph_embedding_size = 3
+        self.graph_embedding_size = 2
 
         ## for comparison, removing the BFS compoenent
         # self.note = 'GraphRNN_MLP_nobfs'
