@@ -140,7 +140,10 @@ def train_autoencoder_epoch(epoch, args, rnn, data_loader,
 
         # compute the regularization term in the loss function
         # start with simple regularization to normal distribution (questionable results in literature)
-        Z_g = (torch.tensor(np.random.normal(size=Z_pred.shape), dtype=torch.float)).to(device)
+        if torch.cuda.is_available():
+            (torch.cuda.tensor(np.random.normal(size=Z_pred.shape), dtype=torch.float)).to(device)
+        else:
+            Z_g = (torch.tensor(np.random.normal(size=Z_pred.shape), dtype=torch.float)).to(device)
         regularizer_loss = 2*regularizer_loss_func(Z_pred, Z_g)
 
         #D_pred = critic(Z_pred)
