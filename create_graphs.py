@@ -100,6 +100,15 @@ def create(args):
             G.graph['Z'] = np.array([0,1])
             graphs.append(G)
         args.max_prev_node=50
+    elif args.graph_type=='caveman_continuous':
+        graphs = []
+        for k in range(1000):
+            p = 0.1 + (0.9-0.1)*(k/(1000-1))
+            G = nx.relaxed_caveman_graph(2, int(18), p=p)
+            G.graph['Z'] = np.array([p,])
+            graphs.append(G)
+        args.max_prev_node = 30
+        return graphs
     elif args.graph_type=='caveman_small_mixed':
         graphs = []
         for k in range(500):

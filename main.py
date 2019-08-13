@@ -47,8 +47,8 @@ if __name__ == '__main__':
 
     args.conditional = args.graph_embedding_size is not None
 
-    os.environ['CUDA_VISIBLE_DEVICES'] = str(args.cuda)
-    print('CUDA', args.cuda)
+    #os.environ['CUDA_VISIBLE_DEVICES'] = str(args.cuda)
+    #print('CUDA', args.cuda)
     fns = filenames(args)
     print('File name prefix', fns.fname)
     # check if necessary directories exist
