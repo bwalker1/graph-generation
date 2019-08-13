@@ -145,8 +145,8 @@ def train_autoencoder_epoch(epoch, args, rnn, data_loader,
         D_pred = critic(Z_pred)
         D_g = critic(Z_g)
 
-        regularizer_loss = sigmoid(D_pred).sum()
-        critic_loss = (logsigmoid(D_g) - logsigmoid(D_pred)).sum()
+        regularizer_loss = (sigmoid(D_pred).sum())/len(D_pred)
+        critic_loss = logsigmoid(D_g).sum() - logsigmoid(D_pred).sum()
 
         # compute the reconstruction term in the loss function
         output_y = Variable(output_y).to(device)
