@@ -83,7 +83,7 @@ def train_autoencoder_epoch(epoch, args, rnn, data_loader,
     critic = nn.Sequential(nn.Linear(args.graph_embedding_size,4*args.graph_embedding_size),nn.ReLU(),
                            nn.Linear(4*args.graph_embedding_size, 8* args.graph_embedding_size), nn.ReLU(),
                            nn.Linear(8*args.graph_embedding_size, 4 * args.graph_embedding_size),nn.ReLU(),
-                           nn.Linear(4*args.graph_embedding_size, args.graph_embedding_size))
+                           nn.Linear(4*args.graph_embedding_size, 1))
     optimizer_critic = optim.Adam(critic.parameters(), lr=0.001)
 
     regularizer_loss_func = SamplesLoss(loss="sinkhorn")
