@@ -45,10 +45,8 @@ if __name__ == '__main__':
     # parser.set_defaults(**vars(args_default))
     args = parser.parse_args()
 
-    if args.conditional:
-        print("Using conditional input")
-    else:
-        print("Not using conditional input")
+    args.conditional = args.graph_embedding_size is not None
+
     os.environ['CUDA_VISIBLE_DEVICES'] = str(args.cuda)
     print('CUDA', args.cuda)
     fns = filenames(args)
@@ -171,12 +169,30 @@ if __name__ == '__main__':
         graph_embedding_size = None
 
     if args.mode == "autoencoder":
+        if args.pre_train and args.train:
+            # add an RNN pre-trained for unconditional generation
+            pre_rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
+                                hidden_size=args.hidden_size_rnn, num_layers=args.num_layers,
+                                graph_embedding_size=None, has_input=False,
+                                has_output=True, is_encoder=False, output_size=args.hidden_size_rnn_output).to(device)
+            pre_output = GRU_plain(input_size=1, embedding_size=args.embedding_size_rnn_output,
+                               hidden_size=args.hidden_size_rnn_output, num_layers=args.num_layers, has_input=True,
+                               has_output=True, output_size=1).to(device)
+            print("Beginning pre-training")
+            train(args, dataset_loader, pre_rnn, pre_output, pre_train=True)
+            print("Pre-training complete")
+            rnn_init = (pre_rnn.state_dict(), pre_output.state_dict())
+        else:
+            rnn_init = None
+
         #(self, input_size, embedding_size, hidden_size, num_layers, graph_embedding_size, output_size=None, hidden_size_rnn_output=None, embedding_size_rnn_output=None)
         rnn = GRUAutoencoder(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
                              hidden_size=args.hidden_size_rnn, num_layers=args.num_layers,
                              output_size=args.hidden_size_rnn_output,
                              graph_embedding_size=graph_embedding_size,hidden_size_rnn_output=args.hidden_size_rnn_output,
-                             embedding_size_rnn_output=args.embedding_size_rnn_output).to(device)
+                             embedding_size_rnn_output=args.embedding_size_rnn_output, rnn_init=rnn_init).to(device)
+
+
     else:
         rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
                         hidden_size=args.hidden_size_rnn, num_layers=args.num_layers,

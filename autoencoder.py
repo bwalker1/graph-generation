@@ -25,7 +25,7 @@ from model import *
 # produces a new graph sequence from the same distribution of graphs (hopefully)
 class GRUAutoencoder(nn.Module):
     def __init__(self, input_size, embedding_size, hidden_size, num_layers, graph_embedding_size, output_size,
-                 hidden_size_rnn_output=None, embedding_size_rnn_output=None):
+                 hidden_size_rnn_output=None, embedding_size_rnn_output=None, rnn_init=None):
         super(GRUAutoencoder, self).__init__()
         self.num_layers = num_layers
         self.hidden_size = hidden_size
@@ -42,14 +42,36 @@ class GRUAutoencoder(nn.Module):
 
         # set up network to decode latent to new hidden state
         self.hidden_net = nn.Linear(graph_embedding_size, self.num_layers * self.hidden_size)
-        self.decoder_rnn = GRU_plain(input_size=input_size, embedding_size=input_size,
+        #pre_rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
+        #                        hidden_size=args.hidden_size_rnn, num_layers=args.num_layers,
+        #                        graph_embedding_size=None, has_input=False,
+        #                        has_output=True, is_encoder=False, output_size=args.hidden_size_rnn_output).to(device)
+        self.decoder_rnn = GRU_plain(input_size=input_size, embedding_size=embedding_size,
                                      hidden_size=hidden_size, num_layers=num_layers,
-                                     graph_embedding_size=graph_embedding_size, has_input=True,
+                                     graph_embedding_size=graph_embedding_size, has_input=False,
                                      has_output=True, is_encoder=False,
                                      output_size=hidden_size_rnn_output).to(device)
         self.decoder_output = GRU_plain(input_size=1, embedding_size=embedding_size_rnn_output,
                                         hidden_size=hidden_size_rnn_output, num_layers=num_layers, has_input=True,
                                         has_output=True, output_size=1).to(device)
+
+        # if we were given pretrained weights, use them
+        if rnn_init is not None:
+            # put in the pre-trained weights where appropriate
+            self.encoder_rnn.load_state_dict(rnn_init[0], strict=False)
+            self.decoder_rnn.load_state_dict(rnn_init[0], strict=False)
+            self.decoder_output.load_state_dict(rnn_init[1])
+
+        # Some of the values that weren't filled in by the pre-trained weights should be adjusted to make sure
+        # that training starts from a position equivalent to the unconditional generation from pre-training
+        # First, ensure that the encoder portion is initialized to always encode to a zero vector in latent space
+        self.encoder_rnn.encode_net[2].weight.data.fill_(0)
+        self.encoder_rnn.encode_net[2].bias.data.fill_(0)
+
+        # Second, ensure that a zero latent vector leads to a zero initial hidden state
+        self.decoder_rnn.hidden_net[0].bias.data.fill_(0)
+        self.decoder_rnn.hidden_net[2].bias.data.fill_(0)
+        self.decoder_rnn.hidden_net[4].bias.data.fill_(0)
 
     def init_hidden(self, batch_size):
         pass
@@ -85,4 +107,4 @@ class GRUAutoencoder(nn.Module):
 
             y_pred = F.sigmoid(y_pred)
 
-            return y_pred
+            return y_pred, Z

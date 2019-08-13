@@ -20,6 +20,7 @@ import pickle
 from tensorboard_logger import configure, log_value
 import scipy.misc
 import time as tm
+from geomloss import SamplesLoss
 
 from utils import *
 from model import *
@@ -79,6 +80,8 @@ def train_autoencoder_epoch(epoch, args, rnn, data_loader,
     rnn.train()
     loss_sum = 0
 
+    regularizer_loss_func = SamplesLoss(loss="sinkhorn")
+
     for batch_idx, data in enumerate(data_loader):
         rnn.zero_grad()
         x_unsorted = data['x'].float()
@@ -123,7 +126,14 @@ def train_autoencoder_epoch(epoch, args, rnn, data_loader,
 
 
         # feed the input graphs into the encoder to get the decoded sequence
-        y_pred = rnn(x, output_x=output_x, pack=False, input_len=y_len, input_len_output=output_y_len)
+        y_pred, Z_pred = rnn(x, output_x=output_x, pack=False, input_len=y_len, input_len_output=output_y_len)
+
+        # compute the regularization term in the loss function
+        # start with simple regularization to normal distribution (questionable results in literature)
+        Z_g = (torch.tensor(np.random.normal(size=Z_pred.shape), dtype=torch.float)).to(device)
+        regularizer_loss = 2*regularizer_loss_func(Z_pred, Z_g)
+
+        # compute the reconstruction term in the loss function
         output_y = Variable(output_y).to(device)
 
         # clean
@@ -133,7 +143,7 @@ def train_autoencoder_epoch(epoch, args, rnn, data_loader,
         output_y = pack_padded_sequence(output_y, output_y_len, batch_first=True)
         output_y = pad_packed_sequence(output_y, batch_first=True)[0]
         # use cross entropy loss
-        loss = binary_cross_entropy_weight(y_pred, output_y)
+        loss = binary_cross_entropy_weight(y_pred, output_y) + regularizer_loss
         loss.backward()
         feature_dim = y.size(1) * y.size(2)
         loss_sum += loss.item() * feature_dim

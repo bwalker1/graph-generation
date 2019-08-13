@@ -148,11 +148,11 @@ def test_rnn_epoch(epoch, args, rnn, output, test_batch_size=16, Z_list=None):
 
 
 # train function for LSTM + VAE
-def train(args, dataset_train, rnn, output, Z_list=None):
+def train(args, dataset_train, rnn, output, Z_list=None, pre_train=False):
     # get the filenames that we'll need for saving
     fns = filenames(args)
     # check if load existing model
-    if args.load:
+    if not pre_train and args.load:
 
         fname = args.model_save_path + fns.fname + 'lstm_' + str(args.load_epoch) + '_cond=' + str(
             args.conditional) + '.dat'
@@ -176,7 +176,8 @@ def train(args, dataset_train, rnn, output, Z_list=None):
 
     # start main loop
     time_all = np.zeros(args.epochs)
-    while epoch <= args.epochs:
+    max_epochs = args.epochs if not pre_train else args.pre_train_epochs
+    while epoch <= max_epochs:
         time_start = tm.time()
         # train
         if 'GraphRNN_RNN' in args.note:
@@ -188,7 +189,7 @@ def train(args, dataset_train, rnn, output, Z_list=None):
         time_end = tm.time()
         time_all[epoch - 1] = time_end - time_start
         # test
-        if epoch % args.epochs_test == 0 and epoch >= args.epochs_test_start:
+        if not pre_train and (epoch % args.epochs_test == 0 and epoch >= args.epochs_test_start):
             for sample_time in range(1, 4):
                 G_pred = []
                 while len(G_pred) < args.test_total_size:
@@ -206,7 +207,7 @@ def train(args, dataset_train, rnn, output, Z_list=None):
             print('test done, graphs saved')
 
         # save model checkpoint
-        if args.save:
+        if not pre_train and args.save:
             if epoch % args.epochs_save == 0:
                 fname = args.model_save_path + fns.fname + 'lstm_' + str(epoch) + '_cond=' + str(
                     args.conditional) + '.dat'

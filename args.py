@@ -22,13 +22,12 @@ class Args():
         # The dependent Bernoulli sequence version of GraphRNN
         self.note = 'GraphRNN_RNN'
 
-        ### Whether we are doing conditional generation
-        self.conditional = True
+        ### If we aren't doing vanilla unconditional decoding, the dimensionality of our graph latent space vector
         self.graph_embedding_size = 2
 
-        ## for comparison, removing the BFS compoenent
-        # self.note = 'GraphRNN_MLP_nobfs'
-        # self.note = 'GraphRNN_RNN_nobfs'
+        # pre-training for autoencoder
+        self.pre_train = True
+        self.pre_train_epochs = 10
 
         ### Which dataset is used to train the model
         # self.graph_type = 'DD'

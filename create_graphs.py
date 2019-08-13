@@ -117,6 +117,29 @@ def create(args):
             G.graph['id'] = k
             graphs.append(G)
         args.max_prev_node = 30
+
+    elif args.graph_type=="caveman_2_3_er_ba_mixed":
+        graphs = []
+        for k in range(250):
+            G = nx.relaxed_caveman_graph(2, int(24), p=0.15)
+            G.graph['Z'] = np.array([1, 0, 0, 0])
+            G.graph['id'] = k
+            graphs.append(G)
+        for k in range(250):
+            G = nx.relaxed_caveman_graph(3, int(18), p=0.15)
+            G.graph['Z'] = np.array([0, 1, 0, 0])
+            G.graph['id'] = k
+            graphs.append(G)
+        for k in range(250):
+            G = nx.random_regular_graph(4, 50)
+            G.graph['Z'] = np.array([0, 0, 1, 0])
+            graphs.append(G)
+        for k in range(250):
+            G = nx.barabasi_albert_graph(50, 2)
+            G.graph['Z'] = np.array([0, 0, 0, 1])
+            graphs.append(G)
+        args.max_prev_node = 50
+
     elif args.graph_type=='many_classes':
         for k in range(100):
             G = nx.relaxed_caveman_graph(2,int(30),p=0.15)
