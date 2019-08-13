@@ -80,10 +80,19 @@ def train_autoencoder_epoch(epoch, args, rnn, data_loader,
     rnn.train()
     loss_sum = 0
 
+    critic = nn.Sequential(nn.Linear(args.graph_embedding_size,4*args.graph_embedding_size),nn.ReLU(),
+                           nn.Linear(4*args.graph_embedding_size, 8* args.graph_embedding_size), nn.ReLU(),
+                           nn.Linear(8*args.graph_embedding_size, 4 * args.graph_embedding_size),nn.ReLU(),
+                           nn.Linear(4*args.graph_embedding_size, args.graph_embedding_size))
+    optimizer_critic = optim.Adam(critic.parameters(), lr=0.001)
+
     regularizer_loss_func = SamplesLoss(loss="sinkhorn")
+    sigmoid = nn.Sigmoid()
+    logsigmoid = nn.LogSigmoid()
 
     for batch_idx, data in enumerate(data_loader):
         rnn.zero_grad()
+        critic.zero_grad()
         x_unsorted = data['x'].float()
         y_unsorted = data['y'].float()
 
@@ -131,7 +140,13 @@ def train_autoencoder_epoch(epoch, args, rnn, data_loader,
         # compute the regularization term in the loss function
         # start with simple regularization to normal distribution (questionable results in literature)
         Z_g = (torch.tensor(np.random.normal(size=Z_pred.shape), dtype=torch.float)).to(device)
-        regularizer_loss = 2*regularizer_loss_func(Z_pred, Z_g)
+        #regularizer_loss = 2*regularizer_loss_func(Z_pred, Z_g)
+
+        D_pred = critic(Z_pred)
+        D_g = critic(Z_g)
+
+        regularizer_loss = sigmoid(D_pred).sum()
+        critic_loss = (logsigmoid(D_g) - logsigmoid(D_pred)).sum()
 
         # compute the reconstruction term in the loss function
         output_y = Variable(output_y).to(device)
@@ -144,12 +159,15 @@ def train_autoencoder_epoch(epoch, args, rnn, data_loader,
         output_y = pad_packed_sequence(output_y, batch_first=True)[0]
         # use cross entropy loss
         loss = binary_cross_entropy_weight(y_pred, output_y) + regularizer_loss
+        critic_loss.backward(retain_graph=True)
         loss.backward()
         feature_dim = y.size(1) * y.size(2)
         loss_sum += loss.item() * feature_dim
         # update deterministic and lstm
         optimizer_rnn.step()
         scheduler_rnn.step()
+
+        optimizer_critic.step()
 
         if epoch % args.epochs_log == 0 and batch_idx == 0:  # only output first batch's statistics
             print('Epoch: {}/{}, train loss: {:.6f}, graph type: {}, num_layer: {}, hidden: {}'.format(

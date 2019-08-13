@@ -27,7 +27,7 @@ class Args():
 
         # pre-training for autoencoder
         self.pre_train = True
-        self.pre_train_epochs = 10
+        self.pre_train_epochs = 1
 
         ### Which dataset is used to train the model
         # self.graph_type = 'DD'
