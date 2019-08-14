@@ -489,10 +489,11 @@ class Graph_sequence_sampler_pytorch(torch.utils.data.Dataset):
             # probability to change connection:
             p = 0.1*self.gumbel_tau
 
-            h = torch.tensor(np.stack(((1-p)*adj_encoded, (p/(self.max_prev_node-1))*(1-adj_encoded)),axis=-1),
-                             dtype=torch.float)
+            h = torch.tensor((np.stack(((1-p)*adj_encoded+p*(1-adj_encoded), p*(adj_encoded) + (1-p)*(1-adj_encoded))
+                                     ,axis=-1))
+                             , dtype=torch.float)
             g = self.gumbel.sample(sample_shape=h.shape)
-            adj_encoded = self.softmax((h+g)/self.gumbel_tau)[:,:,0]
+            adj_encoded = np.tril(self.softmax((h+g)/self.gumbel_tau)[:, :, 0].numpy())
 
         # get x and y and adj
         # for small graph the rest are zero padded

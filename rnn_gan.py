@@ -48,6 +48,10 @@ class Generator(nn.Module):
         self.logsigmoid = nn.LogSigmoid()
         self.softmax = nn.Softmax(dim=1)
 
+    def init_hidden(self, batch_size):
+        self.rnn.hidden = self.rnn.init_hidden(batch_size=batch_size)
+        self.output.hidden = self.output.init_hidden(batch_size=batch_size)
+
     def forward(self, Z):
         batch_size = Z.shape[0]
 
@@ -84,3 +88,58 @@ class Generator(nn.Module):
             h = self.rnn(x_step)
 
         return y_pred
+
+
+
+def train_rnn_gan(args, generator, critic, dataloader):
+    optimizer_generator = optim.Adam(list(generator.parameters()), lr=args.lr)
+    optimizer_critic = optim.Adam(list(critic.parameters()), lr=args.lr)
+
+    batch_size = args.batch_size
+
+    logsigmoid = nn.LogSigmoid()
+
+    for epoch in range(args.epochs):
+        for batch_idx, data in enumerate(dataloader):
+            generator.zero_grad()
+            critic.zero_grad()
+
+            generator.init_hidden(batch_size=batch_size)
+            critic.hidden = critic.init_hidden(batch_size=2*batch_size)
+
+
+            # generate latent space variables to feed into generator
+            Z = Variable(torch.tensor(np.random.normal(size=[batch_size, args.graph_embedding_size]), dtype=torch.float))\
+                .to(device)
+
+            # generate the graphs
+            y_pred = generator(Z)
+
+            # sample sets of actual data
+            y_true = data['y'].float()
+
+            # construct variable encoding whether data is real
+            a = torch.tensor(np.concatenate((np.zeros(batch_size), np.ones(batch_size))), dtype=torch.float)
+            y = torch.cat((y_pred, y_true), dim=0)
+
+            # run the critic
+            log_a_pred = torch.flatten(critic(y))
+
+            # compute the losses
+            critic_loss = -(log_a_pred*a - log_a_pred*(1-a)).sum()/(batch_size)
+            generator_loss = -logsigmoid(log_a_pred*(1-a)).sum()/batch_size
+
+            critic_loss.backward(retain_graph=True)
+            generator_loss.backward()
+
+            optimizer_generator.step()
+            optimizer_critic.step()
+
+            if batch_idx==0:
+                print(
+                    'Epoch: {}/{}, generator loss: {:.6f}, critic loss: {:.6f}'.format(
+                        epoch, args.epochs, generator_loss.item(), critic_loss.item()))
+
+
+def train_rnn_gan_epoch(epoch, args, generator, optimizer_generator, critic, optimizer_critic):
+    pass

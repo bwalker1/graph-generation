@@ -196,13 +196,13 @@ if __name__ == '__main__':
     elif args.mode == "gan":
         critic = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
                            hidden_size=args.hidden_size_rnn, num_layers=args.num_layers,
-                           graph_embedding_size=graph_embedding_size, has_input=False,
+                           graph_embedding_size=1, has_input=False,
                            has_output=True, is_encoder=True, output_size=args.hidden_size_rnn_output)
         generator = Generator(args.max_num_node, args.max_prev_node, args.embedding_size_rnn,args.hidden_size_rnn,
                               args.num_layers, args.graph_embedding_size, args.hidden_size_rnn_output,
                               args.embedding_size_rnn_output)
-        y_pred = generator(torch.tensor([[1, 0], [0, 1], [0, 0]], dtype=torch.float32))
-        print(y_pred)
+        #y_pred = generator(torch.tensor([[1, 0], [0, 1], [0, 0]], dtype=torch.float32))
+        #print(y_pred)
 
     else:
         rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
@@ -222,6 +222,8 @@ if __name__ == '__main__':
             train_encoder(args, dataset_loader, rnn, Z_list)
         elif args.mode == "autoencoder":
             train_autoencoder(args, dataset_loader, rnn)
+        elif args.mode == "gan":
+            train_rnn_gan(args, generator, critic, dataset_loader)
 
     # test phase
     if True:

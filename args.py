@@ -5,7 +5,7 @@ class Args():
         # control what main.py does
         self.train = True
         # set to either encoder, decoder, or autoencoder
-        self.mode = "decoder"
+        self.mode = "gan"
 
         self.make_graph_list = False
 
