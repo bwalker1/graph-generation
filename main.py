@@ -19,6 +19,7 @@ import collections
 import matplotlib.pyplot as plt
 
 from autoencoder import *
+from rnn_gan import *
 
 if __name__ == '__main__':
     # set up to work with or without cuda
@@ -140,7 +141,7 @@ if __name__ == '__main__':
         ### dataset initialization
         dataset = Graph_sequence_sampler_pytorch(graphs_train, max_prev_node=args.max_prev_node,
                                                  max_num_node=args.max_num_node, use_classes=args.conditional,
-                                                 iteration=args.max_prev_node_iter)
+                                                 iteration=args.max_prev_node_iter, gumbel_tau=1)
         dataset_test = Graph_sequence_sampler_pytorch(graphs_test, max_prev_node=dataset.max_prev_node,
                                                       max_num_node=args.max_num_node, use_classes=args.conditional,
                                                       iteration=args.max_prev_node_iter)
@@ -192,6 +193,16 @@ if __name__ == '__main__':
                              graph_embedding_size=graph_embedding_size,hidden_size_rnn_output=args.hidden_size_rnn_output,
                              embedding_size_rnn_output=args.embedding_size_rnn_output, rnn_init=rnn_init).to(device)
 
+    elif args.mode == "gan":
+        critic = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,
+                           hidden_size=args.hidden_size_rnn, num_layers=args.num_layers,
+                           graph_embedding_size=graph_embedding_size, has_input=False,
+                           has_output=True, is_encoder=True, output_size=args.hidden_size_rnn_output)
+        generator = Generator(args.max_num_node, args.max_prev_node, args.embedding_size_rnn,args.hidden_size_rnn,
+                              args.num_layers, args.graph_embedding_size, args.hidden_size_rnn_output,
+                              args.embedding_size_rnn_output)
+        y_pred = generator(torch.tensor([[1, 0], [0, 1], [0, 0]], dtype=torch.float32))
+        print(y_pred)
 
     else:
         rnn = GRU_plain(input_size=args.max_prev_node, embedding_size=args.embedding_size_rnn,

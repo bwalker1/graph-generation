@@ -428,8 +428,15 @@ def test_encode_decode_adj_full():
 
 ########## use pytorch dataloader
 class Graph_sequence_sampler_pytorch(torch.utils.data.Dataset):
-    def __init__(self, G_list, max_num_node=None, max_prev_node=None, iteration=20000, use_classes = False):
+    def __init__(self, G_list, max_num_node=None, max_prev_node=None, iteration=20000, use_classes = False,
+                 gumbel_tau=None):
         self.use_classes = use_classes
+
+        # this allows for gumbel smoothing of the sequence (mainly for use with GAN model)
+        self.gumbel_tau = gumbel_tau
+        if self.gumbel_tau is not None:
+            self.gumbel = torch.distributions.Gumbel(0.0, 1.0)
+            self.softmax = nn.Softmax(dim=2)
 
         self.adj_all = []
         self.len_all = []
@@ -476,6 +483,17 @@ class Graph_sequence_sampler_pytorch(torch.utils.data.Dataset):
         #print(x_idx)
         adj_copy = adj_copy[np.ix_(x_idx, x_idx)]
         adj_encoded = encode_adj(adj_copy.copy(), max_prev_node=self.max_prev_node)
+
+        # if enabled, do a resampling to soften the adjacency
+        if self.gumbel_tau is not None:
+            # probability to change connection:
+            p = 0.1*self.gumbel_tau
+
+            h = torch.tensor(np.stack(((1-p)*adj_encoded, (p/(self.max_prev_node-1))*(1-adj_encoded)),axis=-1),
+                             dtype=torch.float)
+            g = self.gumbel.sample(sample_shape=h.shape)
+            adj_encoded = self.softmax((h+g)/self.gumbel_tau)[:,:,0]
+
         # get x and y and adj
         # for small graph the rest are zero padded
         y_batch[0:adj_encoded.shape[0], :] = adj_encoded
